@@ -1,6 +1,6 @@
 ﻿namespace Game {
     public enum Direction {
-        Top,
+        Up,
         Down,
         Left,
         Right,
