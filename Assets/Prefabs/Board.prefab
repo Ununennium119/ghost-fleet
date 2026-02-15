@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14338c45bcdf4845a0ccbd72c68bbf61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Board
+  boardSize: 10
   cellPrefab: {fileID: 3842055249168360529, guid: b6b2023b1ba620048ac9bf8d7c44e165, type: 3}
   cellSpacing: 0.1
-  growLeft: 1
