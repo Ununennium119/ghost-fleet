@@ -23,13 +23,13 @@ namespace Game.Manager {
             GameOver,
         }
 
-        [Header("Development")]
+        [Header("UI")]
         [SerializeField, Tooltip("The text showing the current phase")]
         private TextMeshProUGUI phaseText;
+        [SerializeField, Tooltip("The text the winner")]
+        private TextMeshProUGUI winText;
         [SerializeField, Tooltip("The next phase button")]
         private Button nextPhaseButton;
-        [SerializeField, Tooltip("The game over button")]
-        private Button gameOverButton;
 
         [Header("Board")]
         [SerializeField, Tooltip("The game objects containing the boards")]
@@ -62,7 +62,8 @@ namespace Game.Manager {
             Logger.LogInstanceInitialized(this);
 
             nextPhaseButton.onClick.AddListener(NextPhase);
-            gameOverButton.onClick.AddListener(GameOver);
+            
+            winText.gameObject.SetActive(false);
         }
 
         private void Start() {
@@ -141,6 +142,35 @@ namespace Game.Manager {
             return true;
         }
 
+        /// <summary>
+        /// Attacks the cell in the given position in a board based on current phase.
+        /// </summary>
+        /// <param name="position">The position of the cell to attack</param>
+        public void AttackCell(Vector2Int position) {
+            if (_currentPhase is not Phase.Attack1 and not Phase.Attack2) return;
+
+            var isDestroyed = false;
+            if (_currentPhase == Phase.Attack1) {
+                isDestroyed = _board2.AttackCell(position);
+                if (_board2.IsDestroyed()) {
+                    winText.gameObject.SetActive(true);
+                    winText.text = "Player 1 Wins!";
+                    GameOver();
+                }
+            }
+            if (_currentPhase == Phase.Attack2) {
+                isDestroyed = _board1.AttackCell(position);
+                if (_board1.IsDestroyed()) {
+                    winText.gameObject.SetActive(true);
+                    winText.text = "Player 2 Wins!";
+                    GameOver();
+                }
+            }
+            if (!isDestroyed) {
+                NextPhase();
+            }
+        }
+
 
         /// <summary>
         /// Changes the phase to the next phase.
@@ -179,6 +209,8 @@ namespace Game.Manager {
                 }
                 case Phase.Placement2: {
                     if (ships2.All(ship => ship.IsPlaced)) {
+                        _board1.SetTargetable(false);
+                        _board2.SetTargetable(true);
                         _currentPhase = Phase.Attack1;
                         foreach (var ship in ships2) {
                             ship.gameObject.SetActive(false);
@@ -187,12 +219,18 @@ namespace Game.Manager {
                     break;
                 }
                 case Phase.Attack1:
+                    _board1.SetTargetable(true);
+                    _board2.SetTargetable(false);
                     _currentPhase = Phase.Attack2;
                     break;
                 case Phase.Attack2:
+                    _board1.SetTargetable(false);
+                    _board2.SetTargetable(true);
                     _currentPhase = Phase.Attack1;
                     break;
                 case Phase.GameOver:
+                    _board1.SetTargetable(false);
+                    _board2.SetTargetable(false);
                     break;
                 default: {
                     throw new ArgumentOutOfRangeException();
@@ -220,7 +258,15 @@ namespace Game.Manager {
         /// Updates the text showing the current phase.
         /// </summary>
         private void UpdatePhaseText() {
-            phaseText.text = _currentPhase.ToString();
+            phaseText.text = _currentPhase switch {
+                Phase.Start => "Start",
+                Phase.Placement1 => "Player 1 Placement",
+                Phase.Placement2 => "Player 2 Placement",
+                Phase.Attack1 => "Player 1 Attack",
+                Phase.Attack2 => "Player 2 Attack",
+                Phase.GameOver => "Game Over!",
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         /// <summary>

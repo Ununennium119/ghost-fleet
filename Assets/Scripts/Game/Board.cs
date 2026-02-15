@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Game.Manager;
 using UnityEngine;
 
 namespace Game {
@@ -76,7 +75,7 @@ namespace Game {
                     return false;
                 }
                 var cell = _cells[position.x, position.y];
-                if (cell.IsFilled || cell.IsDestroyed) {
+                if (cell.IsFilled || cell.IsAttacked) {
                     return false;
                 }
                 cellsToFill.Add(cell);
@@ -99,9 +98,9 @@ namespace Game {
         /// <returns>
         /// True if the cell was filled (a ship was in it).
         /// </returns>
-        public bool DestroyCell(Vector2Int position) {
+        public bool AttackCell(Vector2Int position) {
             var cell = _cells[position.x, position.y];
-            cell.IsDestroyed = true;
+            cell.Attack();
             return cell.IsFilled;
         }
 
@@ -109,7 +108,20 @@ namespace Game {
         /// True if all the cells containing a ship are destroyed.
         /// </returns>
         public bool IsDestroyed() {
-            return _cells.Cast<Cell>().All(cell => !cell.IsFilled || cell.IsDestroyed);
+            return _cells.Cast<Cell>().All(cell => !cell.IsFilled || cell.IsAttacked);
+        }
+
+        /// <summary>
+        /// Sets if the cells are targetable.
+        /// </summary>
+        public void SetTargetable(bool isTargetable) {
+            foreach (var cell in _cells) {
+                if (cell.IsAttacked) {
+                    cell.SetTargetable(false);
+                } else {
+                    cell.SetTargetable(isTargetable);
+                }
+            }
         }
     }
 }
