@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Game.Manager;
 using UnityEngine;
 
 namespace Game {
@@ -7,8 +8,12 @@ namespace Game {
     /// Represents a board.
     /// </summary>
     public class Board : MonoBehaviour {
+        [SerializeField, Tooltip("The size of the board")]
+        private int boardSize;
+
         [SerializeField, Tooltip("The board cell prefab")]
         private GameObject cellPrefab;
+        
         [SerializeField, Tooltip("The space between cells")]
         private float cellSpacing = 0.1f;
 
@@ -22,7 +27,6 @@ namespace Game {
         /// If true, cells are instantiated from bottom-right to top-left, otherwise, cells are instantiated from bottom-left to top-right.
         /// </param>
         public void Initialize(bool growLeft) {
-            var boardSize = GameManager.Instance.GetBoardSize();
             _cells = new Cell[boardSize, boardSize];
             for (var x = 0; x < boardSize; x++) {
                 for (var z = 0; z < boardSize; z++) {
@@ -30,7 +34,7 @@ namespace Game {
                     var position = new Vector3(
                         x: transform.position.x + xSign * x * (cellSpacing + cellPrefab.transform.localScale.x),
                         y: 0,
-                        z: (z - boardSize / 2) * (cellSpacing + cellPrefab.transform.localScale.z)
+                        z: (z - boardSize / 2f) * (cellSpacing + cellPrefab.transform.localScale.z)
                     );
                     var cellGameObject = Instantiate(
                         original: cellPrefab,
@@ -39,10 +43,14 @@ namespace Game {
                         parent: transform
                     );
 
+                    var cell = cellGameObject.GetComponent<Cell>();
+                    cell.Board = this;
                     if (growLeft) {
-                        _cells[boardSize - 1 - x, z] = cellGameObject.GetComponent<Cell>();
+                        cell.Position = new Vector2Int(boardSize - 1 - x, z);
+                        _cells[boardSize - 1 - x, z] = cell;
                     } else {
-                        _cells[x, z] = cellGameObject.GetComponent<Cell>();
+                        cell.Position = new Vector2Int(x, z);
+                        _cells[x, z] = cell;
                     }
                 }
             }
@@ -59,6 +67,14 @@ namespace Game {
 
             var cellsToFill = new List<Cell>();
             foreach (var position in positions) {
+                if (
+                    position.x < 0 ||
+                    position.x >= boardSize ||
+                    position.y < 0 ||
+                    position.y >= boardSize
+                ) {
+                    return false;
+                }
                 var cell = _cells[position.x, position.y];
                 if (cell.IsFilled || cell.IsDestroyed) {
                     return false;
@@ -92,7 +108,7 @@ namespace Game {
         /// <returns>
         /// True if all the cells containing a ship are destroyed.
         /// </returns>
-        public bool isDestroyed() {
+        public bool IsDestroyed() {
             return _cells.Cast<Cell>().All(cell => !cell.IsFilled || cell.IsDestroyed);
         }
     }
