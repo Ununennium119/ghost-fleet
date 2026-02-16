@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 108653806127124320, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
     - target: {fileID: 548955690617409434, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -60,6 +64,10 @@ PrefabInstance:
       propertyPath: size
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 3529896620877201258, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
     - target: {fileID: 5022111249814967890, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalScale.x
       value: 4.3
@@ -68,6 +76,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Galleon Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 6585919788451000455, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
+    - target: {fileID: 8245501737530074010, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
+    - target: {fileID: 8272479783342843841, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
     - target: {fileID: 8512773750223679055, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

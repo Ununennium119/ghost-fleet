@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Common;
+using Game.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,10 @@ namespace Game.Manager {
             Attack2,
             GameOver,
         }
+
+
+        public event EventHandler OnAttack;
+        
 
         [Header("UI")]
         [SerializeField, Tooltip("The text showing the current phase")]
@@ -52,6 +57,7 @@ namespace Game.Manager {
         private Ship _selectedShip;
 
         private InputManager _inputManager;
+        private MusicManager _musicManager;
 
 
         private void Awake() {
@@ -72,6 +78,7 @@ namespace Game.Manager {
 
         private void Start() {
             _inputManager = InputManager.Instance;
+            _musicManager = MusicManager.Instance;
 
             Cell.OnAnyHover += MoveSelectedShipToCell;
             _inputManager.OnCancelPerformed += CancelShipSelection;
@@ -153,6 +160,7 @@ namespace Game.Manager {
         public void AttackCell(Vector2Int position) {
             if (_currentPhase is not Phase.Attack1 and not Phase.Attack2) return;
 
+            OnAttack?.Invoke(this, EventArgs.Empty);
             var isDestroyed = false;
             if (_currentPhase == Phase.Attack1) {
                 isDestroyed = _board2.AttackCell(position);
@@ -248,6 +256,7 @@ namespace Game.Manager {
         /// Changes the phase to game over phase.
         /// </summary>
         private void GameOver() {
+            _musicManager.PlayVictoryMusic();
             _currentPhase = Phase.GameOver;
             foreach (var ship in ships1) {
                 ship.DisableSelection();
