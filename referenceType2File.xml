@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfTypeDate xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TypeDate>
+    <guid>ee1f1154c3ea44f40b8cf871eeeafa55</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/AssetCollector.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.AssetCollector</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>81931e889dbc3a944adbe04b68aef3f8</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/AssetReferenceCollection.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.AssetReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>5acbf2e8553abca448794aa16f8ff850</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/ClassReferenceCollection.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.ClassReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>ab7a2daacc7fb3d479fcc9c636645b40</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/CollectionData.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.CollectionData</string>
+      <string>UnitySweeper.TypeDate</string>
+      <string>UnitySweeper.IReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>d8bad7f953653fa4fba8b302aaf4b251</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/FindUnusedAssetsWindow.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.FindUnusedAssetsWindow</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>ee4aeeed7c4c1ad4a993bd4221bbc6ac</guid>
+    <fileName>Assets/Plugins/UnitySweeper/Editor/ShaderReferenceCollection.cs</fileName>
+    <timeStamp>2024-06-01T17:09:43+03:30</timeStamp>
+    <typeFullName>
+      <string>UnitySweeper.ShaderReferenceCollection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>d5106140ef69347438e390cb45554aa9</guid>
+    <fileName>Assets/InputSystem_Actions.cs</fileName>
+    <timeStamp>2026-02-15T21:54:28.4271256+03:30</timeStamp>
+    <typeFullName />
+  </TypeDate>
+  <TypeDate>
+    <guid>1b56fc1b62004cbcafc3b570877d8f1e</guid>
+    <fileName>Assets/Scripts/Common/Logger.cs</fileName>
+    <timeStamp>2026-02-15T21:54:28.4352988+03:30</timeStamp>
+    <typeFullName>
+      <string>Common.Logger</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>fa59e1f491a14ca9bd164fbdeb385cc7</guid>
+    <fileName>Assets/Scripts/Common/SceneLoader.cs</fileName>
+    <timeStamp>2026-02-16T16:59:48.1266506+03:30</timeStamp>
+    <typeFullName>
+      <string>Common.SceneLoader</string>
+      <string>Common.SceneLoader+Scene</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>14338c45bcdf4845a0ccbd72c68bbf61</guid>
+    <fileName>Assets/Scripts/Game/Board.cs</fileName>
+    <timeStamp>2026-02-16T18:10:51.0605171+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Board</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>8fb0289fd18547d0b911781e7b24f3a3</guid>
+    <fileName>Assets/Scripts/Game/Cell.cs</fileName>
+    <timeStamp>2026-02-16T20:27:37.0872199+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Cell</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>e3a612ae3ebc41a59fb3fa65d269bba2</guid>
+    <fileName>Assets/Scripts/Game/Direction.cs</fileName>
+    <timeStamp>2026-02-15T21:54:28.4363041+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Direction</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>6ff3db27a10a4b91ba900f037136a6fa</guid>
+    <fileName>Assets/Scripts/Game/Ship.cs</fileName>
+    <timeStamp>2026-02-16T19:38:56.7801315+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Ship</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>88aab623251f48c88694926eef294252</guid>
+    <fileName>Assets/Scripts/Game/ShipSelectionHandler.cs</fileName>
+    <timeStamp>2026-02-15T21:54:28.4383302+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.ShipSelectionHandler</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>52df0ca4d26e45a6a048f696b054eacb</guid>
+    <fileName>Assets/Scripts/LoadingMenu/LoadSceneCallback.cs</fileName>
+    <timeStamp>2026-02-16T17:01:25.4568233+03:30</timeStamp>
+    <typeFullName>
+      <string>LoadingMenu.LoadSceneCallback</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>95fbaaa90fc34240984e10795857e20d</guid>
+    <fileName>Assets/Scripts/MainMenu/MainMenuUI.cs</fileName>
+    <timeStamp>2026-02-16T17:08:50.1651666+03:30</timeStamp>
+    <typeFullName>
+      <string>MainMenu.UI.MainMenuUI</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>dfbe97460f8acd1488a82178305cdf59</guid>
+    <fileName>Assets/IgniteCoders/Simple Water Shader/Resources/WaterReflection.cs</fileName>
+    <timeStamp>2021-03-13T05:56:27+03:30</timeStamp>
+    <typeFullName>
+      <string>WaterReflection</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>6be1a982071b4df5a5bed6a26b0874f8</guid>
+    <fileName>Assets/Scripts/Game/Audio/MusicManager.cs</fileName>
+    <timeStamp>2026-02-16T21:00:55.5772189+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Audio.MusicManager</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>d2302cf88ba843ceaa38fe430a246a1d</guid>
+    <fileName>Assets/Scripts/Game/Audio/SoundEffectsManager.cs</fileName>
+    <timeStamp>2026-02-16T20:04:25.8270478+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Audio.SoundEffectsManager</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>ebc9b60cd39d431caff1e43b0ab01d5e</guid>
+    <fileName>Assets/Scripts/Game/Manager/GameManager.cs</fileName>
+    <timeStamp>2026-02-16T20:58:24.2869423+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Manager.GameManager</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>585d30a287e74fc3b76f85700d0c7a14</guid>
+    <fileName>Assets/Scripts/Game/Manager/InputManager.cs</fileName>
+    <timeStamp>2026-02-15T21:54:28.4378084+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.Manager.InputManager</string>
+      <string>Game.Manager.InputManager+OnRotatePerformedArgs</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>f094962fd3084baf8eb2a80c4adf0c56</guid>
+    <fileName>Assets/Scripts/Game/ScriptableObjects/AudioClipsSO.cs</fileName>
+    <timeStamp>2026-02-16T19:15:29.3480682+03:30</timeStamp>
+    <typeFullName>
+      <string>Game.ScriptableObjects.AudioClipsSO</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>fcf7219bab7fe46a1ad266029b2fee19</guid>
+    <fileName>Assets/IgniteCoders/Simple Water Shader/Info/Scripts/Readme.cs</fileName>
+    <timeStamp>2021-03-13T05:56:27+03:30</timeStamp>
+    <typeFullName>
+      <string>Readme</string>
+      <string>Readme+Section</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+  <TypeDate>
+    <guid>476cc7d7cd9874016adc216baab94a0a</guid>
+    <fileName>Assets/IgniteCoders/Simple Water Shader/Info/Scripts/Editor/ReadmeEditor.cs</fileName>
+    <timeStamp>2021-03-13T05:56:23+03:30</timeStamp>
+    <typeFullName>
+      <string>ReadmeEditor</string>
+    </typeFullName>
+    <assembly>Assembly-CSharp-Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</assembly>
+  </TypeDate>
+</ArrayOfTypeDate>
