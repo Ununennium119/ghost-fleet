@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Common;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +31,8 @@ namespace Game.Manager {
         private TextMeshProUGUI winText;
         [SerializeField, Tooltip("The next phase button")]
         private Button nextPhaseButton;
+        [SerializeField, Tooltip("The main menu button")]
+        private Button mainMenuButton;
 
         [Header("Board")]
         [SerializeField, Tooltip("The game objects containing the boards")]
@@ -62,6 +65,7 @@ namespace Game.Manager {
             Logger.LogInstanceInitialized(this);
 
             nextPhaseButton.onClick.AddListener(NextPhase);
+            mainMenuButton.onClick.AddListener(() => SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene));
             
             winText.gameObject.SetActive(false);
         }
