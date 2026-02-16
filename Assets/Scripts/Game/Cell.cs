@@ -13,8 +13,8 @@ namespace Game {
         /// This event is triggered whenever any cell is hovered.
         /// </summary>
         public static event EventHandler OnAnyHover;
-        
-        
+
+
         /// <summary>
         /// Resets the static objects, specifically the OnTrash event.
         /// This method is used to clean up the event subscription.
@@ -63,6 +63,12 @@ namespace Game {
 
         private void Start() {
             _gameManager = GameManager.Instance;
+
+            // To fix the problem of these transparent objects not being rendered on top of the ocean material
+            GetComponent<Renderer>().material.renderQueue = 3100;
+            targetedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
+            attackedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
+            destroyedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
         }
 
         private void Update() {
@@ -88,7 +94,6 @@ namespace Game {
 
         public void OnPointerClick(PointerEventData eventData) {
             if (!_isTargetable) return;
-            Debug.Log("ATTACKED!");
             _gameManager.AttackCell(Position);
         }
 
@@ -105,6 +110,7 @@ namespace Game {
         /// </summary>
         public void Attack() {
             IsAttacked = true;
+            targetedVisual.SetActive(false);
             if (IsFilled) {
                 destroyedVisual.SetActive(true);
             } else {
