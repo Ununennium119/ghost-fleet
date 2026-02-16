@@ -13,6 +13,15 @@ namespace Game {
         /// This event is triggered whenever any cell is hovered.
         /// </summary>
         public static event EventHandler OnAnyHover;
+        
+        
+        /// <summary>
+        /// Resets the static objects, specifically the OnTrash event.
+        /// This method is used to clean up the event subscription.
+        /// </summary>
+        public static void ResetStaticObjects() {
+            OnAnyHover = null;
+        }
 
 
         [SerializeField, Tooltip("the targeted game object visual")]

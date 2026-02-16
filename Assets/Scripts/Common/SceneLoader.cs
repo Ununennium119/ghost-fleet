@@ -1,0 +1,40 @@
+﻿using UnityEngine.SceneManagement;
+
+namespace Common {
+    /// <summary>
+    /// This class is responsible for loading scenes.
+    /// </summary>
+    public static class SceneLoader {
+        public enum Scene {
+            MainMenuScene,
+            LoadingScene,
+            GameScene,
+        }
+
+
+        private static Scene _targetScene;
+
+
+        /// <summary>
+        /// Loads the specified scene.
+        /// </summary>
+        /// <param name="scene">The scene to load.</param>
+        public static void LoadScene(Scene scene) {
+            _targetScene = scene;
+            SceneManager.LoadScene(nameof(Scene.LoadingScene));
+        }
+
+        /// <summary>
+        /// This method is called after a loading scene to load the actual target scene.
+        /// </summary>
+        public static void LoadSceneCallback() {
+            SceneManager.LoadScene(_targetScene.ToString());
+        }
+
+        /// <param name="scene">The scene to check.</param>
+        /// <returns><c>true</c> if the scene is active, otherwise <c>false</c>.</returns>
+        public static bool IsSceneActive(Scene scene) {
+            return SceneManager.GetActiveScene().name == scene.ToString();
+        }
+    }
+}
