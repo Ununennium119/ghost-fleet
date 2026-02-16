@@ -13,6 +13,9 @@ namespace Game {
         
         [SerializeField, Tooltip("The selection handler")]
         private ShipSelectionHandler selectionHandler;
+        
+        [SerializeField, Tooltip("The starting direction")]
+        private Direction _startDirection;
 
         
         /// <summary>
@@ -27,7 +30,7 @@ namespace Game {
 
 
         private Vector2Int _position;
-        private Direction _direction = Direction.Right;
+        private Direction _direction;
         private Vector3 _defaultTransformPosition;
         private Quaternion _defaultTransformRotation;
         
@@ -37,6 +40,8 @@ namespace Game {
         private void Awake() {
             _defaultTransformPosition = transform.position;
             _defaultTransformRotation = transform.rotation;
+
+            _direction = _startDirection;
         }
 
         private void Start() {
@@ -48,8 +53,8 @@ namespace Game {
 
         private void Update() {
             transform.forward = _direction switch {
-                Direction.Up => Vector3.right,
-                Direction.Down => Vector3.left,
+                Direction.Up => Vector3.left,
+                Direction.Down => Vector3.right,
                 Direction.Left => -Vector3.forward,
                 Direction.Right => Vector3.forward,
                 _ => throw new ArgumentOutOfRangeException()
