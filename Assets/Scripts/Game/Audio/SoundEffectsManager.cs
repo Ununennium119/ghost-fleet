@@ -1,4 +1,5 @@
 ﻿using System;
+using Common;
 using Game.Manager;
 using Game.ScriptableObjects;
 using UnityEngine;
@@ -11,16 +12,35 @@ namespace Game.Audio {
     /// </summary>
     /// <remarks>This class is singleton.</remarks>
     public class SoundEffectsManager : MonoBehaviour {
-        private static SoundEffectsManager Instance { get; set; }
+        public static SoundEffectsManager Instance { get; private set; }
 
 
         [SerializeField, Tooltip("Audio clips are stored in this scriptable object.")]
         private AudioClipsSO audioClipsSO;
 
+        
+        /// <summary>
+        /// Adjusts the volume of sound effects, configurable by the player in the options menu.
+        /// </summary>
+        private float _volumeMultiplier;
 
         private GameManager _gameManager;
         
         private Vector3? _cameraPosition;
+
+
+        /// <returns>Sound effects volume</returns>
+        public float GetVolume() {
+            return _volumeMultiplier;
+        }
+
+        /// <summary>
+        /// Increases volume of sound effects by 0.1. If volume is 1, sets it to 0.
+        /// </summary>
+        public void SetVolume(float value) {
+            _volumeMultiplier = value;
+            PlayerPrefsManager.SetSoundEffectsVolume(_volumeMultiplier);
+        }
 
 
         private void Awake() {
@@ -34,6 +54,8 @@ namespace Game.Audio {
             Logger.LogInstanceInitialized(this);
             
             _cameraPosition = Camera.main?.transform.position;
+
+            UpdateVolumeMultiplier();
         }
 
         private void Start() {
@@ -44,7 +66,7 @@ namespace Game.Audio {
 
 
         /// <remarks>
-        /// Invoked when the <see cref="DeliveryManager.OnDeliverySuccess"/> event is triggered.
+        /// Invoked when the <see cref="GameManager.OnAttack"/> event is triggered.
         /// </remarks>
         private void PlayAttackAudioClip(object sender, EventArgs e) {
             var position = _cameraPosition ?? gameObject.transform.position;
@@ -57,7 +79,12 @@ namespace Game.Audio {
         }
 
         private void PlaySound(AudioClip clip, Vector3 position, float volume = 0.5f) {
-            AudioSource.PlayClipAtPoint(clip, new Vector3(0, 20, 0), volume);
+            AudioSource.PlayClipAtPoint(clip, position, volume);
+        }
+
+
+        private void UpdateVolumeMultiplier() {
+            _volumeMultiplier = PlayerPrefsManager.GetSoundEffectsVolume(defaultValue: 0.5f);
         }
     }
 }
