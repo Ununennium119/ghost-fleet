@@ -1,4 +1,5 @@
 ﻿using Game.Manager;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -7,13 +8,13 @@ namespace Game {
     /// Handles ship selection logic.
     /// </summary>
     public class ShipSelectionHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
-        [SerializeField, Tooltip("The visual for when the ship is selected")]
+        [SerializeField, Tooltip("The visual for when the ship is selected")] [Required]
         private GameObject selectedGameObject;
 
-        [SerializeField, Tooltip("The visual for when the ship is hovered")]
+        [SerializeField, Tooltip("The visual for when the ship is hovered")] [Required]
         private GameObject hoveredGameObject;
 
-        [SerializeField, Tooltip("The related ship")]
+        [SerializeField, Tooltip("The related ship")] [Required]
         private Ship ship;
 
 

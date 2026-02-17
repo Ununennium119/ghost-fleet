@@ -1,5 +1,6 @@
 ﻿using System;
 using Game.Manager;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -24,13 +25,13 @@ namespace Game {
         }
 
 
-        [SerializeField, Tooltip("the targeted game object visual")]
+        [SerializeField, Tooltip("the targeted game object visual")] [Required]
         private GameObject targetedVisual;
 
-        [SerializeField, Tooltip("the attacked game object visual")]
+        [SerializeField, Tooltip("the attacked game object visual")] [Required]
         private GameObject attackedVisual;
 
-        [SerializeField, Tooltip("the destroyed game object visual")]
+        [SerializeField, Tooltip("the destroyed game object visual")] [Required]
         private GameObject destroyedVisual;
 
 

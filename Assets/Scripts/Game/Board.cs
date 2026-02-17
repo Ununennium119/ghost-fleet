@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace Game {
@@ -8,9 +9,9 @@ namespace Game {
     /// </summary>
     public class Board : MonoBehaviour {
         [SerializeField, Tooltip("The size of the board")]
-        private int boardSize;
+        private int boardSize = 10;
 
-        [SerializeField, Tooltip("The board cell prefab")]
+        [SerializeField, Tooltip("The board cell prefab")] [Required]
         private GameObject cellPrefab;
         
         [SerializeField, Tooltip("The space between cells")]
