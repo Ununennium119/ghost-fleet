@@ -1,16 +1,17 @@
 ﻿using Common;
 using Game;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MainMenu.UI {
+namespace MainMenu {
     /// <summary>
     /// The UI for the main menu.
     /// </summary>
     public class MainMenuUI : MonoBehaviour {
-        [SerializeField, Tooltip("The play button")]
+        [SerializeField, Tooltip("The play button")] [Required]
         private Button playButton;
-        [SerializeField, Tooltip("The quit button")]
+        [SerializeField, Tooltip("The quit button")] [Required]
         private Button quitButton;
 
 
@@ -21,7 +22,6 @@ namespace MainMenu.UI {
             // Resetting (setting to null) all static objects used when loading main menu
             Cell.ResetStaticObjects();
 
-            // Resetting time scale
             Time.timeScale = 1f;
         }
     }

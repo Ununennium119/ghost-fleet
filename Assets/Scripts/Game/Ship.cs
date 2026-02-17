@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Game.Manager;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace Game {
@@ -8,13 +9,13 @@ namespace Game {
     /// Represents a ship.
     /// </summary>
     public class Ship : MonoBehaviour {
-        [SerializeField, Tooltip("The size of the ship")]
+        [SerializeField, Tooltip("The size of the ship")] [Required]
         private int size;
         
-        [SerializeField, Tooltip("The selection handler")]
+        [SerializeField, Tooltip("The selection handler")] [Required]
         private ShipSelectionHandler selectionHandler;
         
-        [SerializeField, Tooltip("The starting direction")]
+        [SerializeField, Tooltip("The starting direction")] [Required]
         private Direction _startDirection;
 
         

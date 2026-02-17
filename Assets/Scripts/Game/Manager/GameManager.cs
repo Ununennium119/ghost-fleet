@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Linq;
-using Common;
 using Game.Audio;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Logger = Common.Logger;
 
 namespace Game.Manager {
@@ -16,7 +13,7 @@ namespace Game.Manager {
         /// <summary>
         /// Represents different phases of the game.
         /// </summary>
-        private enum Phase {
+        public enum Phase {
             Start,
             Placement1,
             Placement2,
@@ -25,19 +22,46 @@ namespace Game.Manager {
             GameOver,
         }
 
+        public enum Player {
+            Player1,
+            Player2,
+        }
+
 
         public event EventHandler OnAttack;
-        
 
-        [Header("UI")]
-        [SerializeField, Tooltip("The text showing the current phase")]
-        private TextMeshProUGUI phaseText;
-        [SerializeField, Tooltip("The text the winner")]
-        private TextMeshProUGUI winText;
-        [SerializeField, Tooltip("The next phase button")]
-        private Button nextPhaseButton;
-        [SerializeField, Tooltip("The main menu button")]
-        private Button mainMenuButton;
+        /// <summary>
+        /// This event is triggered whenever the player toggles the pause state.
+        /// </summary>
+        public event EventHandler<OnPauseToggledArgs> OnPauseToggled;
+        public class OnPauseToggledArgs : EventArgs {
+            public bool IsGamePaused;
+        }
+
+        /// <summary>
+        /// This event is triggered whenever the game phase is changed.
+        /// </summary>
+        public event EventHandler<OnPhaseChangedArgs> OnPhaseChanged;
+        public class OnPhaseChangedArgs : EventArgs {
+            public Phase Phase;
+        }
+
+        /// <summary>
+        /// This event is triggered whenever a ship is placed.
+        /// </summary>
+        public event EventHandler OnShipPlaced;
+
+        /// <summary>
+        /// This event is triggered whenever the game phase is changed.
+        /// </summary>
+        public event EventHandler<OnWinArgs> OnWin;
+        public class OnWinArgs : EventArgs {
+            public Player Winner;
+        }
+
+
+        public Phase CurrentPhase { get; private set; } = Phase.Start;
+
 
         [Header("Board")]
         [SerializeField, Tooltip("The game objects containing the boards")]
@@ -51,10 +75,12 @@ namespace Game.Manager {
         [SerializeField, Tooltip("The player 2 ships")]
         private Ship[] ships2;
 
-        private Phase _currentPhase = Phase.Start;
         private Board _board1;
         private Board _board2;
         private Ship _selectedShip;
+
+        private bool _hasLateStarted = false;
+        private bool _isGamePaused = false;
 
         private InputManager _inputManager;
         private MusicManager _musicManager;
@@ -69,11 +95,6 @@ namespace Game.Manager {
             }
             Instance = this;
             Logger.LogInstanceInitialized(this);
-
-            nextPhaseButton.onClick.AddListener(NextPhase);
-            mainMenuButton.onClick.AddListener(() => SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene));
-            
-            winText.gameObject.SetActive(false);
         }
 
         private void Start() {
@@ -90,30 +111,24 @@ namespace Game.Manager {
                 ship.gameObject.SetActive(false);
             }
 
-            UpdatePhaseText();
             CreateBoards();
-            NextPhase();
         }
 
         private void Update() {
-            switch (_currentPhase) {
-                case Phase.Start:
-                    nextPhaseButton.interactable = false;
-                    break;
-                case Phase.Placement1: {
-                    nextPhaseButton.interactable = ships1.All(ship => ship.IsPlaced);
-                    break;
-                }
-                case Phase.Placement2: {
-                    nextPhaseButton.interactable = ships2.All(ship => ship.IsPlaced);
-                    break;
-                }
-                default:
-                    nextPhaseButton.interactable = true;
-                    break;
+            if (!_hasLateStarted) {
+                _hasLateStarted = true;
+                NextPhase();
             }
         }
 
+
+        /// <summary>
+        /// Toggles game pause state.
+        /// </summary>
+        public void TogglePause() {
+            _isGamePaused = !_isGamePaused;
+            OnPauseToggled?.Invoke(this, new OnPauseToggledArgs { IsGamePaused = _isGamePaused });
+        }
 
         /// <summary>
         /// Selects the given ship and deselects the previous selected ship.
@@ -121,7 +136,7 @@ namespace Game.Manager {
         /// <param name="ship">The ship to select.</param>
         /// <returns>True, if the ship is selected.</returns>
         public bool SelectShip(Ship ship) {
-            if (_currentPhase is not Phase.Placement1 and not Phase.Placement2) {
+            if (CurrentPhase is not Phase.Placement1 and not Phase.Placement2) {
                 return false;
             }
 
@@ -137,7 +152,7 @@ namespace Game.Manager {
         /// <param name="ship"></param>
         /// <returns></returns>
         public bool DeselectShip(Ship ship) {
-            if (_currentPhase is not Phase.Placement1 and not Phase.Placement2) {
+            if (CurrentPhase is not Phase.Placement1 and not Phase.Placement2) {
                 return false;
             }
             if (_selectedShip != ship) {
@@ -158,23 +173,21 @@ namespace Game.Manager {
         /// </summary>
         /// <param name="position">The position of the cell to attack</param>
         public void AttackCell(Vector2Int position) {
-            if (_currentPhase is not Phase.Attack1 and not Phase.Attack2) return;
+            if (CurrentPhase is not Phase.Attack1 and not Phase.Attack2) return;
 
             OnAttack?.Invoke(this, EventArgs.Empty);
             var isDestroyed = false;
-            if (_currentPhase == Phase.Attack1) {
+            if (CurrentPhase == Phase.Attack1) {
                 isDestroyed = _board2.AttackCell(position);
                 if (_board2.IsDestroyed()) {
-                    winText.gameObject.SetActive(true);
-                    winText.text = "Player 1 Wins!";
+                    OnWin?.Invoke(this, new OnWinArgs { Winner = Player.Player1 });
                     GameOver();
                 }
             }
-            if (_currentPhase == Phase.Attack2) {
+            if (CurrentPhase == Phase.Attack2) {
                 isDestroyed = _board1.AttackCell(position);
                 if (_board1.IsDestroyed()) {
-                    winText.gameObject.SetActive(true);
-                    winText.text = "Player 2 Wins!";
+                    OnWin?.Invoke(this, new OnWinArgs { Winner = Player.Player2 });
                     GameOver();
                 }
             }
@@ -183,13 +196,21 @@ namespace Game.Manager {
             }
         }
 
+        public bool AreShips1Placed() {
+            return ships1.All(ship => ship.IsPlaced);
+        }
+
+        public bool AreShips2Placed() {
+            return ships2.All(ship => ship.IsPlaced);
+        }
+
 
         /// <summary>
         /// Changes the phase to the next phase.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException">If the current phase is invalid.</exception>
-        private void NextPhase() {
-            if (_currentPhase is not Phase.Placement1 and not Phase.Placement2) {
+        public void NextPhase() {
+            if (CurrentPhase is not Phase.Placement1 and not Phase.Placement2) {
                 foreach (var ship in ships1) {
                     ship.DisableSelection();
                 }
@@ -198,9 +219,9 @@ namespace Game.Manager {
                 }
             }
 
-            switch (_currentPhase) {
+            switch (CurrentPhase) {
                 case Phase.Start:
-                    _currentPhase = Phase.Placement1;
+                    ChangePhase(Phase.Placement1);
                     foreach (var ship in ships1) {
                         ship.gameObject.SetActive(true);
                         ship.EnableSelection();
@@ -208,7 +229,7 @@ namespace Game.Manager {
                     break;
                 case Phase.Placement1: {
                     if (ships1.All(ship => ship.IsPlaced)) {
-                        _currentPhase = Phase.Placement2;
+                        ChangePhase(Phase.Placement2);
                         foreach (var ship in ships1) {
                             ship.gameObject.SetActive(false);
                         }
@@ -223,7 +244,7 @@ namespace Game.Manager {
                     if (ships2.All(ship => ship.IsPlaced)) {
                         _board1.SetTargetable(false);
                         _board2.SetTargetable(true);
-                        _currentPhase = Phase.Attack1;
+                        ChangePhase(Phase.Attack1);
                         foreach (var ship in ships2) {
                             ship.gameObject.SetActive(false);
                         }
@@ -233,12 +254,12 @@ namespace Game.Manager {
                 case Phase.Attack1:
                     _board1.SetTargetable(true);
                     _board2.SetTargetable(false);
-                    _currentPhase = Phase.Attack2;
+                    ChangePhase(Phase.Attack2);
                     break;
                 case Phase.Attack2:
                     _board1.SetTargetable(false);
                     _board2.SetTargetable(true);
-                    _currentPhase = Phase.Attack1;
+                    ChangePhase(Phase.Attack1);
                     break;
                 case Phase.GameOver:
                     _board1.SetTargetable(false);
@@ -248,8 +269,6 @@ namespace Game.Manager {
                     throw new ArgumentOutOfRangeException();
                 }
             }
-
-            UpdatePhaseText();
         }
 
         /// <summary>
@@ -257,29 +276,13 @@ namespace Game.Manager {
         /// </summary>
         private void GameOver() {
             _musicManager.PlayVictoryMusic();
-            _currentPhase = Phase.GameOver;
+            ChangePhase(Phase.GameOver);
             foreach (var ship in ships1) {
                 ship.DisableSelection();
             }
             foreach (var ship in ships2) {
                 ship.DisableSelection();
             }
-            UpdatePhaseText();
-        }
-
-        /// <summary>
-        /// Updates the text showing the current phase.
-        /// </summary>
-        private void UpdatePhaseText() {
-            phaseText.text = _currentPhase switch {
-                Phase.Start => "Start",
-                Phase.Placement1 => "Player 1 Placement",
-                Phase.Placement2 => "Player 2 Placement",
-                Phase.Attack1 => "Player 1 Attack",
-                Phase.Attack2 => "Player 2 Attack",
-                Phase.GameOver => "Game Over!",
-                _ => throw new ArgumentOutOfRangeException()
-            };
         }
 
         /// <summary>
@@ -312,9 +315,9 @@ namespace Game.Manager {
             var cell = sender as Cell;
             if (!cell) return;
             if (!_selectedShip) return;
-            if (_currentPhase is not Phase.Placement1 and not Phase.Placement2) return;
-            if (_currentPhase == Phase.Placement1 && cell.Board != _board1) return;
-            if (_currentPhase == Phase.Placement2 && cell.Board != _board2) return;
+            if (CurrentPhase is not Phase.Placement1 and not Phase.Placement2) return;
+            if (CurrentPhase == Phase.Placement1 && cell.Board != _board1) return;
+            if (CurrentPhase == Phase.Placement2 && cell.Board != _board2) return;
 
             _selectedShip.SetPosition(cell.Position, cell.transform.position);
         }
@@ -329,19 +332,28 @@ namespace Game.Manager {
         private void PlaceSelectedShip() {
             if (!_selectedShip) return;
 
-            if (_currentPhase == Phase.Placement1) {
+            if (CurrentPhase == Phase.Placement1) {
                 var isPlaced = _selectedShip.Place(_board1);
                 if (!isPlaced) return;
+
                 _selectedShip.Deselect();
                 _selectedShip.DisableSelection();
                 _selectedShip = null;
-            } else if (_currentPhase == Phase.Placement2) {
+                OnShipPlaced?.Invoke(this, EventArgs.Empty);
+            } else if (CurrentPhase == Phase.Placement2) {
                 var isPlaced = _selectedShip.Place(_board2);
                 if (!isPlaced) return;
+
                 _selectedShip.Deselect();
                 _selectedShip.DisableSelection();
                 _selectedShip = null;
+                OnShipPlaced?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        private void ChangePhase(Phase phase) {
+            CurrentPhase = phase;
+            OnPhaseChanged?.Invoke(this, new OnPhaseChangedArgs { Phase = phase });
         }
     }
 }
