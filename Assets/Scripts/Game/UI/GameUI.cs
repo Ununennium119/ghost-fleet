@@ -1,5 +1,6 @@
 ﻿using System;
 using Common;
+using Game.Enum;
 using Game.Manager;
 using NaughtyAttributes;
 using TMPro;
@@ -38,8 +39,9 @@ namespace Game.UI {
             _gameManager = GameManager.Instance;
 
             _gameManager.OnPhaseChanged += OnPhaseChangedAction;
-            _gameManager.OnShipPlaced += OnShipPlacedAction;
             _gameManager.OnWin += OnWinAction;
+
+            Ship.OnAnyShipMoved += OnAnyShipMovedAction;
         }
 
 
@@ -53,37 +55,37 @@ namespace Game.UI {
 
 
         private void OnPhaseChangedAction(object sender, GameManager.OnPhaseChangedArgs e) {
-            phaseText.text = e.Phase switch {
-                GameManager.Phase.Start => "Start",
-                GameManager.Phase.Placement1 => "Player 1 Placement",
-                GameManager.Phase.Placement2 => "Player 2 Placement",
-                GameManager.Phase.Attack1 => "Player 1 Attack",
-                GameManager.Phase.Attack2 => "Player 2 Attack",
-                GameManager.Phase.GameOver => "Game Over!",
+            phaseText.text = e.GamePhase switch {
+                GamePhase.Start => "Start",
+                GamePhase.Placement1 => "Player 1 Placement",
+                GamePhase.Placement2 => "Player 2 Placement",
+                GamePhase.Attack1 => "Player 1 Attack",
+                GamePhase.Attack2 => "Player 2 Attack",
+                GamePhase.GameOver => "Game Over!",
                 _ => throw new ArgumentOutOfRangeException()
             };
-            nextPhaseButton.interactable = _gameManager.CurrentPhase switch {
-                GameManager.Phase.Start => false,
-                GameManager.Phase.Placement1 => false,
-                GameManager.Phase.Placement2 => false,
-                GameManager.Phase.GameOver => false,
+            nextPhaseButton.interactable = _gameManager.CurrentGamePhase switch {
+                GamePhase.Start => false,
+                GamePhase.Placement1 => false,
+                GamePhase.Placement2 => false,
+                GamePhase.GameOver => false,
                 _ => true
             };
         }
 
-        private void OnShipPlacedAction(object sender, EventArgs e) {
+        private void OnAnyShipMovedAction(object sender, EventArgs e) {
             // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-            nextPhaseButton.interactable = _gameManager.CurrentPhase switch {
-                GameManager.Phase.Placement1 => _gameManager.AreShips1Placed(),
-                GameManager.Phase.Placement2 => _gameManager.AreShips2Placed(),
+            nextPhaseButton.interactable = _gameManager.CurrentGamePhase switch {
+                GamePhase.Placement1 => _gameManager.GetPlayerBoard(Player.Player1).AreShipsOnBoard(),
+                GamePhase.Placement2 => _gameManager.GetPlayerBoard(Player.Player2).AreShipsOnBoard(),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
 
         private void OnWinAction(object sender, GameManager.OnWinArgs e) {
             winText.text = e.Winner switch {
-                GameManager.Player.Player1 => "Player 1 Wins!",
-                GameManager.Player.Player2 => "Player 2 Wins!",
+                Player.Player1 => "Player 1 Wins!",
+                Player.Player2 => "Player 2 Wins!",
                 _ => throw new ArgumentOutOfRangeException()
             };
             winText.gameObject.SetActive(true);
