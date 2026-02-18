@@ -21,6 +21,7 @@ namespace MainMenu {
 
             // Resetting (setting to null) all static objects used when loading main menu
             Cell.ResetStaticObjects();
+            Ship.ResetStaticObjects();
 
             Time.timeScale = 1f;
         }

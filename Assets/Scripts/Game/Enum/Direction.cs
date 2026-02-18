@@ -1,4 +1,4 @@
-﻿namespace Game {
+﻿namespace Game.Enum {
     public enum Direction {
         Up,
         Down,

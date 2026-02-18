@@ -9,6 +9,9 @@ namespace Game.Audio {
     /// <remarks>This class is singleton.</remarks>
     [RequireComponent(typeof(AudioSource))]
     public class MusicManager : MonoBehaviour {
+        private const float DEFAULT_MUSIC_VOLUME = 0.5f;
+        
+        
         public static MusicManager Instance { get; private set; }
 
 
@@ -38,6 +41,9 @@ namespace Game.Audio {
             PlayerPrefsManager.SetMusicVolume(_volume);
         }
 
+        /// <summary>
+        /// Plays victory music.
+        /// </summary>
         public void PlayVictoryMusic() {
             _audioSource.Stop();
             _audioSource.loop = false;
@@ -63,7 +69,7 @@ namespace Game.Audio {
 
 
         private void UpdateVolume() {
-            _volume = PlayerPrefsManager.GetMusicVolume(defaultValue: 0.5f);
+            _volume = PlayerPrefsManager.GetMusicVolume(defaultValue: DEFAULT_MUSIC_VOLUME);
             _audioSource.volume = _volume;
         }
     }

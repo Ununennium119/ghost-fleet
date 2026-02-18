@@ -12,20 +12,21 @@ namespace Game.Audio {
     /// </summary>
     /// <remarks>This class is singleton.</remarks>
     public class SoundEffectsManager : MonoBehaviour {
+        private const float DEFAULT_SOUND_EFFECTS_VOLUME = 0.5f;
+
+
         public static SoundEffectsManager Instance { get; private set; }
 
 
         [SerializeField, Tooltip("Audio clips are stored in this scriptable object.")]
         private AudioClipsSO audioClipsSO;
 
-        
+
         /// <summary>
         /// Adjusts the volume of sound effects, configurable by the player in the options menu.
         /// </summary>
         private float _volumeMultiplier;
 
-        private GameManager _gameManager;
-        
         private Vector3? _cameraPosition;
 
 
@@ -52,16 +53,14 @@ namespace Game.Audio {
             }
             Instance = this;
             Logger.LogInstanceInitialized(this);
-            
+
             _cameraPosition = Camera.main?.transform.position;
 
             UpdateVolumeMultiplier();
         }
 
         private void Start() {
-            _gameManager = GameManager.Instance;
-
-            _gameManager.OnAttack += PlayAttackAudioClip;
+            Cell.OnAnyAttack += PlayAttackAudioClip;
         }
 
 
@@ -73,18 +72,18 @@ namespace Game.Audio {
             PlaySound(audioClipsSO.attackAudioClips, position);
         }
 
-        private void PlaySound(AudioClip[] clip, Vector3 position, float volume = 0.5f) {
+        private void PlaySound(AudioClip[] clip, Vector3 position, float volume = 1.0f) {
             var selectedClip = clip[Random.Range(0, clip.Length)];
             PlaySound(selectedClip, position, volume);
         }
 
-        private void PlaySound(AudioClip clip, Vector3 position, float volume = 0.5f) {
-            AudioSource.PlayClipAtPoint(clip, position, volume);
+        private void PlaySound(AudioClip clip, Vector3 position, float volume = 1.0f) {
+            AudioSource.PlayClipAtPoint(clip, position, volume * _volumeMultiplier);
         }
 
 
         private void UpdateVolumeMultiplier() {
-            _volumeMultiplier = PlayerPrefsManager.GetSoundEffectsVolume(defaultValue: 0.5f);
+            _volumeMultiplier = PlayerPrefsManager.GetSoundEffectsVolume(defaultValue: DEFAULT_SOUND_EFFECTS_VOLUME);
         }
     }
 }

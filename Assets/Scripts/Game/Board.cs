@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using NaughtyAttributes;
+using Game.Enum;
+using Game.Manager;
 using UnityEngine;
 
 namespace Game {
@@ -8,65 +10,61 @@ namespace Game {
     /// Represents a board.
     /// </summary>
     public class Board : MonoBehaviour {
+        private const float CELL_SIZE = 1.0f;
+        private const float CELL_SPACING = 0.1f;
+
+
         [SerializeField, Tooltip("The size of the board")]
         private int boardSize = 10;
+        [SerializeField, Tooltip("The player owning the board")]
+        private Player player;
+        [SerializeField, Tooltip("The board's ships")]
+        private Ship[] ships;
 
-        [SerializeField, Tooltip("The board cell prefab")] [Required]
+        [SerializeField, Tooltip("The cell prefab")]
         private GameObject cellPrefab;
-        
-        [SerializeField, Tooltip("The space between cells")]
-        private float cellSpacing = 0.1f;
+        [SerializeField, Tooltip("The cells container")]
+        private GameObject cellsContainer;
+
 
         private Cell[,] _cells;
-        private readonly List<Ship> _ships = new();
 
-        /// <summary>
-        /// Initializes the board with cells.
-        /// </summary>
-        /// <param name="growLeft">
-        /// If true, cells are instantiated from bottom-right to top-left, otherwise, cells are instantiated from bottom-left to top-right.
-        /// </param>
-        public void Initialize(bool growLeft) {
-            _cells = new Cell[boardSize, boardSize];
-            for (var x = 0; x < boardSize; x++) {
-                for (var z = 0; z < boardSize; z++) {
-                    var xSign = growLeft ? -1 : 1;
-                    var position = new Vector3(
-                        x: transform.position.x + xSign * x * (cellSpacing + cellPrefab.transform.localScale.x),
-                        y: 0,
-                        z: (z - boardSize / 2f) * (cellSpacing + cellPrefab.transform.localScale.z)
-                    );
-                    var cellGameObject = Instantiate(
-                        original: cellPrefab,
-                        position: position,
-                        rotation: Quaternion.identity,
-                        parent: transform
-                    );
 
-                    var cell = cellGameObject.GetComponent<Cell>();
-                    cell.Board = this;
-                    if (growLeft) {
-                        cell.Position = new Vector2Int(boardSize - 1 - x, z);
-                        _cells[boardSize - 1 - x, z] = cell;
-                    } else {
-                        cell.Position = new Vector2Int(x, z);
-                        _cells[x, z] = cell;
-                    }
-                }
-            }
+        /// <returns>The player owning the board.</returns>
+        public Player GetPlayer() {
+            return player;
         }
 
         /// <summary>
-        /// Adds the ship to the board based on its position.
+        /// Moves the ship to the target position on the board.
         /// </summary>
-        /// <param name="ship">
-        /// The ship to the board.
-        /// </param>
-        public bool AddShip(Ship ship) {
-            var positions = ship.GetPositions();
+        /// <param name="ship"> The ship to move.</param>
+        /// <param name="targetPosition">The position to move the ship into.</param>
+        /// <param name="targetDirection">The new direction of the ship.</param>
+        public bool MoveShip(Ship ship, Vector2Int targetPosition, Direction targetDirection) {
+            var oldPositions = ship.GetPositions();
+            var newPositions = new List<Vector2Int>();
+            for (var i = 0; i < ship.GetSize(); i++) {
+                switch (targetDirection) {
+                    case Direction.Up:
+                        newPositions.Add(targetPosition + new Vector2Int(0, i));
+                        break;
+                    case Direction.Down:
+                        newPositions.Add(targetPosition + new Vector2Int(0, -i));
+                        break;
+                    case Direction.Left:
+                        newPositions.Add(targetPosition + new Vector2Int(-i, 0));
+                        break;
+                    case Direction.Right:
+                        newPositions.Add(targetPosition + new Vector2Int(i, 0));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
 
             var cellsToFill = new List<Cell>();
-            foreach (var position in positions) {
+            foreach (var position in newPositions) {
                 if (
                     position.x < 0 ||
                     position.x >= boardSize ||
@@ -76,51 +74,63 @@ namespace Game {
                     return false;
                 }
                 var cell = _cells[position.x, position.y];
-                if (cell.IsFilled || cell.IsAttacked) {
+                if (!oldPositions.Contains(position) && cell.IsFilled) {
                     return false;
                 }
                 cellsToFill.Add(cell);
             }
 
+            var cellsToUnfill = new List<Cell>();
+            foreach (var position in oldPositions) {
+                var cell = _cells[position.x, position.y];
+                cellsToUnfill.Add(cell);
+            }
+
+            foreach (var cell in cellsToUnfill) {
+                cell.IsFilled = false;
+            }
             foreach (var cell in cellsToFill) {
                 cell.IsFilled = true;
             }
-            _ships.Add(ship);
-
             return true;
         }
 
-        /// <summary>
-        /// Destroyed the cell with the given position in the board.
-        /// </summary>
-        /// <param name="position">
-        /// The position of the cell to destroy.
-        /// </param>
-        /// <returns>
-        /// True if the cell was filled (a ship was in it).
-        /// </returns>
-        public bool AttackCell(Vector2Int position) {
-            var cell = _cells[position.x, position.y];
-            cell.Attack();
-            return cell.IsFilled;
+        /// <returns>True if all the ships are placed on the board.</returns>
+        public bool AreShipsOnBoard() {
+            return ships.All(ship => ship.IsOnBoard());
         }
 
         /// <returns>
-        /// True if all the cells containing a ship are destroyed.
+        /// True if all the ships are destroyed.
         /// </returns>
         public bool IsDestroyed() {
-            return _cells.Cast<Cell>().All(cell => !cell.IsFilled || cell.IsAttacked);
+            var cells = (
+                from ship in ships
+                from position in ship.GetPositions()
+                select _cells[position.x, position.y]
+            ).ToList();
+            return cells.All(cell => cell.IsAttacked);
         }
 
-        /// <summary>
-        /// Sets if the cells are targetable.
-        /// </summary>
-        public void SetTargetable(bool isTargetable) {
-            foreach (var cell in _cells) {
-                if (cell.IsAttacked) {
-                    cell.SetTargetable(false);
-                } else {
-                    cell.SetTargetable(isTargetable);
+
+        private void Awake() {
+            var containerPosition = cellsContainer.transform.transform.position;
+            _cells = new Cell[boardSize, boardSize];
+            for (var x = 0; x < boardSize; x++) {
+                for (var z = 0; z < boardSize; z++) {
+                    var cellGameObject = Instantiate(
+                        original: cellPrefab,
+                        position: new Vector3(
+                            x: containerPosition.x + (CELL_SIZE + CELL_SPACING) * (x - (boardSize - 1) / 2f),
+                            y: 0,
+                            z: containerPosition.z + (CELL_SIZE + CELL_SPACING) * (z - (boardSize - 1) / 2f)
+                        ),
+                        rotation: Quaternion.identity,
+                        parent: cellsContainer.transform
+                    );
+                    var cell = cellGameObject.GetComponent<Cell>();
+                    cell.Initialize(this, new Vector2Int(x, z));
+                    _cells[x, z] = cell;
                 }
             }
         }
