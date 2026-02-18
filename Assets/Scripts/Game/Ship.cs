@@ -1,118 +1,109 @@
 ﻿using System;
 using System.Collections.Generic;
+using Game.Enum;
 using Game.Manager;
 using NaughtyAttributes;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game {
-    /// <summary>
-    /// Represents a ship.
-    /// </summary>
     public class Ship : MonoBehaviour {
-        [SerializeField, Tooltip("The size of the ship")] [Required]
+        private const float RAYCAST_MAX_DISTANCE = 50f;
+
+
+        /// <summary>
+        /// This event is triggered whenever selection of any ship changes.
+        /// </summary>
+        public static event EventHandler<OnAnySelectionChangedArgs> OnAnySelectionChanged;
+        public class OnAnySelectionChangedArgs : EventArgs {
+            public bool IsSelected;
+            public Ship Ship;
+        }
+
+
+        /// <summary>
+        /// This event is triggered whenever any ship is moved.
+        /// </summary>
+        public static event EventHandler OnAnyShipMoved;
+
+
+        /// <summary>
+        /// Resets the static objects.
+        /// </summary>
+        public static void ResetStaticObjects() {
+            OnAnySelectionChanged = null;
+            OnAnyShipMoved = null;
+        }
+
+
+        /// <summary>
+        /// This event is triggered whenever hover of the ship changes.
+        /// </summary>
+        public event EventHandler<OnHoverChangedArgs> OnHoverChanged;
+        public class OnHoverChangedArgs : EventArgs {
+            public bool IsHovered;
+        }
+
+        /// <summary>
+        /// This event is triggered whenever selection of the ship changes.
+        /// </summary>
+        public event EventHandler<OnSelectionChangedArgs> OnSelectionChanged;
+        public class OnSelectionChangedArgs : EventArgs {
+            public bool IsSelected;
+        }
+
+
+        [SerializeField, Tooltip("The board the ship is in")] [Required]
+        private Board board;
+        [SerializeField, Tooltip("The player owning the ship")]
+        private Player player;
+
+        [SerializeField, Tooltip("The size of the ship")]
         private int size;
-        
-        [SerializeField, Tooltip("The selection handler")] [Required]
-        private ShipSelectionHandler selectionHandler;
-        
-        [SerializeField, Tooltip("The starting direction")] [Required]
-        private Direction _startDirection;
+        [SerializeField, Tooltip("The starting direction")]
+        private Direction startingDirection;
 
-        
-        /// <summary>
-        /// True, if the ship is placed in the board.
-        /// </summary>
-        public bool IsPlaced { get; private set; } = false;
-
-        /// <summary>
-        /// True, if the position of the ship is set in the board.
-        /// </summary>
-        public bool IsPositionSet { get; private set; } = false;
+        [SerializeField, Tooltip("The placeholder prefab used when placing the ship")] [Required]
+        private GameObject placeholderPrefab;
 
 
-        private Vector2Int _position;
+        private bool _isSelectable;
+        private bool _isHovered;
+        private bool _isSelected;
+        private GameObject _placeholderGameObject;
+
         private Direction _direction;
-        private Vector3 _defaultTransformPosition;
-        private Quaternion _defaultTransformRotation;
-        
+        private Vector2Int _boardPosition;
+        private bool _isOnBoard;
+
+        private Camera _mainCamera;
+        private Collider _objectCollider;
+
         private InputManager _inputManager;
+        private GameManager _gameManager;
 
 
-        private void Awake() {
-            _defaultTransformPosition = transform.position;
-            _defaultTransformRotation = transform.rotation;
+        public int GetSize() => size;
 
-            _direction = _startDirection;
-        }
-
-        private void Start() {
-            _inputManager = InputManager.Instance;
-
-            _inputManager.OnRotatePerformed += Rotate;
-            _inputManager.OnCancelPerformed += ResetPosition;
-        }
-
-        private void Update() {
-            transform.forward = _direction switch {
-                Direction.Up => Vector3.left,
-                Direction.Down => Vector3.right,
-                Direction.Left => -Vector3.forward,
-                Direction.Right => Vector3.forward,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-
-
-        /// <summary>
-        /// Selects the ship.
-        /// </summary>
-        public void Select() {
-            selectionHandler.SelectVisually();
-        }
-
-        /// <summary>
-        /// Deselects the ship.
-        /// </summary>
-        public void Deselect() {
-            selectionHandler.DeselectVisually();
-
-            if (IsPositionSet) {
-                selectionHandler.SetSelectionEnabled(false);
-            }
-        }
-
-        /// <summary>
-        /// Enables selection.
-        /// </summary>
-        public void EnableSelection() {
-            selectionHandler.SetSelectionEnabled(true);
-        }
-
-        /// <summary>
-        /// Disables selection.
-        /// </summary>
-        public void DisableSelection() {
-            selectionHandler.SetSelectionEnabled(false);
-        }
-
-
-        /// <returns>List of positions which this ship fills.</returns>
+        /// <returns>List of positions which this ship fills. Empty list if the ship is not on the board.</returns>
         /// <exception cref="ArgumentOutOfRangeException">If direction of the ship is invalid.</exception>
         public List<Vector2Int> GetPositions() {
+            if (!_isOnBoard) return new List<Vector2Int>();
+
             var positions = new List<Vector2Int>();
             for (var i = 0; i < size; i++) {
                 switch (_direction) {
                     case Direction.Up:
-                        positions.Add(_position + new Vector2Int(0, i));
+                        positions.Add(_boardPosition + new Vector2Int(0, i));
                         break;
                     case Direction.Down:
-                        positions.Add(_position + new Vector2Int(0, -i));
+                        positions.Add(_boardPosition + new Vector2Int(0, -i));
                         break;
                     case Direction.Left:
-                        positions.Add(_position + new Vector2Int(-i, 0));
+                        positions.Add(_boardPosition + new Vector2Int(-i, 0));
                         break;
                     case Direction.Right:
-                        positions.Add(_position + new Vector2Int(i, 0));
+                        positions.Add(_boardPosition + new Vector2Int(i, 0));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -121,68 +112,117 @@ namespace Game {
             return positions;
         }
 
-        /// <summary>
-        /// Sets the position of the ship in the board.
-        /// </summary>
-        /// <param name="position">The xz position of the target cell.</param>
-        /// <param name="transformPosition">The xyz position of the target cell transform.</param>
-        /// <exception cref="ArgumentOutOfRangeException">If direction of the ship is invalid.</exception>
-        public void SetPosition(Vector2Int position, Vector3 transformPosition) {
-            _position = position;
+        /// <returns>True if ship is on the board.</returns>
+        public bool IsOnBoard() => _isOnBoard;
 
-            var offset = _direction switch {
-                Direction.Up => new Vector3(0, 0, 0.55f * (size - 1)),
-                Direction.Down => new Vector3(0, 0, -0.55f * (size - 1)),
-                Direction.Left => new Vector3(-0.55f * (size - 1), 0, 0),
-                Direction.Right => new Vector3(0.55f * (size - 1), 0, 0),
+
+        private void Awake() {
+            _mainCamera = Camera.main;
+            _objectCollider = GetComponent<Collider>();
+
+            _direction = startingDirection;
+        }
+
+        private void Start() {
+            _inputManager = InputManager.Instance;
+            _gameManager = GameManager.Instance;
+
+            _inputManager.OnClickPerformed += OnClickPerformedAction;
+
+            _gameManager.OnPhaseChanged += OnPhaseChangedAction;
+
+            OnAnySelectionChanged += OnAnySelectionChangedAction;
+        }
+
+        private void Update() {
+            if (!_isSelectable) return;
+
+            var newIsHovered = false;
+            var mousePosition = Mouse.current.position.ReadValue();
+            var ray = _mainCamera.ScreenPointToRay(mousePosition);
+            if (_objectCollider.Raycast(ray, out _, RAYCAST_MAX_DISTANCE)) {
+                newIsHovered = true;
+            }
+
+            if (newIsHovered != _isHovered) {
+                _isHovered = newIsHovered;
+                OnHoverChanged?.Invoke(this, new OnHoverChangedArgs { IsHovered = _isHovered });
+            }
+        }
+
+
+        private void OnClickPerformedAction(object sender, EventArgs e) {
+            var newIsSelected = _isHovered;
+            if (newIsSelected != _isSelected) {
+                SetIsSelected(newIsSelected);
+            }
+        }
+
+        private void OnPhaseChangedAction(object sender, GameManager.OnPhaseChangedArgs e) {
+            _isSelectable = e.GamePhase switch {
+                GamePhase.Start => false,
+                GamePhase.Placement1 => player == Player.Player1,
+                GamePhase.Placement2 => player == Player.Player2,
+                GamePhase.Attack1 => false,
+                GamePhase.Attack2 => false,
+                GamePhase.GameOver => false,
                 _ => throw new ArgumentOutOfRangeException()
             };
-            transform.position = transformPosition + offset;
-            IsPositionSet = true;
-        }
 
-        /// <summary>
-        /// Places the ship on the board.
-        /// </summary>
-        /// <param name="board">The target board.</param>
-        public bool Place(Board board) {
-            var isAdded = board.AddShip(this);
-            if (!isAdded) return false;
-            IsPlaced = true;
-            return true;
-        }
-
-        
-        private void ResetPosition(object sender, EventArgs e) {
-            if (!selectionHandler.IsSelected) return;
-            
-            _direction = Direction.Right;
-            _position = new Vector2Int(-1, -1);
-            transform.position = _defaultTransformPosition;
-            transform.rotation = _defaultTransformRotation;
-            selectionHandler.DeselectVisually();
-            IsPositionSet = false;
-        }
-
-        private void Rotate(object sender, InputManager.OnRotatePerformedArgs e) {
-            if (!selectionHandler.IsSelected) return;
-            _direction = e.Value switch {
-                > 0 => _direction switch {
-                    Direction.Up => Direction.Left,
-                    Direction.Left => Direction.Down,
-                    Direction.Down => Direction.Right,
-                    Direction.Right => Direction.Up,
-                    _ => throw new ArgumentOutOfRangeException()
-                },
-                < 0 => _direction switch {
-                    Direction.Up => Direction.Right,
-                    Direction.Right => Direction.Down,
-                    Direction.Down => Direction.Left,
-                    Direction.Left => Direction.Up,
-                    _ => throw new ArgumentOutOfRangeException()
-                },
-                _ => _direction
+            var isActive = e.GamePhase switch {
+                GamePhase.Start => false,
+                GamePhase.Placement1 => player == Player.Player1,
+                GamePhase.Placement2 => player == Player.Player2,
+                GamePhase.Attack1 => false,
+                GamePhase.Attack2 => false,
+                GamePhase.GameOver => false,
+                _ => throw new ArgumentOutOfRangeException()
             };
+            gameObject.SetActive(isActive);
+        }
+
+        private void OnAnySelectionChangedAction(object sender, OnAnySelectionChangedArgs e) {
+            if (_isSelected && e.IsSelected && e.Ship != this) {
+                SetIsSelected(false);
+            }
+        }
+
+
+        private void SetIsSelected(bool value) {
+            _isSelected = value;
+            OnSelectionChanged?.Invoke(this, new OnSelectionChangedArgs { IsSelected = _isSelected });
+            OnAnySelectionChanged?.Invoke(
+                this,
+                new OnAnySelectionChangedArgs {
+                    IsSelected = _isSelected,
+                    Ship = this
+                }
+            );
+            if (_isSelected) {
+                _placeholderGameObject = Instantiate(
+                    original: placeholderPrefab,
+                    position: transform.position,
+                    rotation: transform.rotation,
+                    parent: null
+                );
+                var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
+                placeholder.direction = _direction;
+                placeholder.size = size;
+            } else {
+                var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
+                if (placeholder.IsOnBoard) {
+                    var isMoved = board.MoveShip(this, placeholder.BoardPosition, placeholder.direction);
+                    if (isMoved) {
+                        _boardPosition = placeholder.BoardPosition;
+                        _direction = placeholder.direction;
+                        _isOnBoard = true;
+                        transform.position = _placeholderGameObject.transform.position;
+                        transform.rotation = _placeholderGameObject.transform.rotation;
+                        OnAnyShipMoved?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+                Destroy(_placeholderGameObject);
+            }
         }
     }
 }

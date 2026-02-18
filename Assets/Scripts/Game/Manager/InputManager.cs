@@ -10,6 +10,8 @@ namespace Game.Manager {
         public static InputManager Instance { get; private set; }
 
 
+        public event EventHandler OnClickPerformed;
+
         public event EventHandler<OnRotatePerformedArgs> OnRotatePerformed;
         public class OnRotatePerformedArgs : EventArgs {
             public float Value;
@@ -34,16 +36,23 @@ namespace Game.Manager {
             _inputSystemActions = new InputSystem_Actions();
             _inputSystemActions.Enable();
 
+            _inputSystemActions.Player.Click.performed += ClickPerformed;
             _inputSystemActions.Player.Rotate.performed += RotatePerformed;
             _inputSystemActions.Player.Cancel.performed += CancelPerformed;
         }
 
         private void OnDestroy() {
+            _inputSystemActions.Player.Click.performed -= ClickPerformed;
             _inputSystemActions.Player.Rotate.performed -= RotatePerformed;
+            _inputSystemActions.Player.Cancel.performed -= CancelPerformed;
 
             _inputSystemActions.Dispose();
         }
 
+
+        private void ClickPerformed(InputAction.CallbackContext context) {
+            OnClickPerformed?.Invoke(this, EventArgs.Empty);
+        }
 
         private void RotatePerformed(InputAction.CallbackContext context) {
             OnRotatePerformed?.Invoke(this, new OnRotatePerformedArgs { Value = context.ReadValue<float>() });

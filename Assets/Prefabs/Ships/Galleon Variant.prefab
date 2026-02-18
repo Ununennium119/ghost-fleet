@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
     - target: {fileID: 548955690617409434, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 4.3
       objectReference: {fileID: 0}
     - target: {fileID: 548955690617409434, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalPosition.x
@@ -26,7 +26,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 548955690617409434, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.11804
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 548955690617409434, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalRotation.w
@@ -70,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
     - target: {fileID: 5022111249814967890, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_LocalScale.x
-      value: 4.3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5937945923731197224, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: m_Name
@@ -80,6 +80,14 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 69bf0e3d32490a74296cf397f9c20ef0, type: 2}
+    - target: {fileID: 7663907985615513724, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7663907985615513724, guid: 04b4447e973813f4184c741305e91ced, type: 3}
+      propertyPath: placeholderPrefab
+      value: 
+      objectReference: {fileID: 1462033749551414900, guid: 53d4102953129704dab101484645d926, type: 3}
     - target: {fileID: 8245501737530074010, guid: 04b4447e973813f4184c741305e91ced, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
