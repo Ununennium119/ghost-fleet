@@ -164,6 +164,9 @@ namespace LobbyMenu.Logic {
                             }
                         }
                     });
+                    NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(
+                        relayAllocation.ToRelayServerData(connectionType.GetValue())
+                    );
                 }
 
                 MultiplayerManager.Instance.StartHost();

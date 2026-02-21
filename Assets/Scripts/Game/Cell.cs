@@ -98,7 +98,7 @@ namespace Game {
             } else {
                 _isAttacked = value;
                 if (_isAttacked) {
-                    OnAnyAttack?.Invoke(this, new OnAnyAttackArgs { IsDestroyed = _isFilled});
+                    OnAnyAttack?.Invoke(this, new OnAnyAttackArgs { IsDestroyed = _isFilled });
                 }
             }
         }
@@ -228,6 +228,15 @@ namespace Game {
         private void OnClickPerformedActionServerRpc(RpcParams rpcParams) {
             var sender = _multiplayerManager.GetPlayerData(rpcParams.Receive.SenderClientId).Player;
             if (sender == _board.GetPlayer()) return;
+            if (_gameManager.GetCurrentGamePhase() is not GamePhase.Attack1 and not GamePhase.Attack2) return;
+            if (
+                _gameManager.GetCurrentGamePhase() == GamePhase.Attack1 &&
+                _board.GetPlayer() == Player.Player1
+            ) return;
+            if (
+                _gameManager.GetCurrentGamePhase() == GamePhase.Attack2 &&
+                _board.GetPlayer() == Player.Player2
+            ) return;
 
             SetAttacked(true);
             HandleAttackVisualClientRpc(new ClientRpcParams());
