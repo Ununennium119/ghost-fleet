@@ -1,5 +1,6 @@
-﻿using Common;
+﻿using Common.Utility;
 using Game;
+using MainMenu.Logic;
 using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,11 +16,20 @@ namespace MainMenu.UI {
         private Button playOnlineButton;
         [SerializeField, Tooltip("The quit button")] [Required]
         private Button quitButton;
+        
+        
+        private GameTypeManager _gameTypeManager;
 
 
         private void Awake() {
-            playOfflineButton.onClick.AddListener(() => { SceneLoader.LoadScene(SceneLoader.Scene.GameScene); });
-            playOnlineButton.onClick.AddListener(() => { SceneLoader.LoadScene(SceneLoader.Scene.LobbyScene); });
+            playOfflineButton.onClick.AddListener(() => {
+                SceneLoader.LoadScene(SceneLoader.Scene.GameScene);
+                _gameTypeManager.SetGameType(GameTypeManager.GameType.Offline);
+            });
+            playOnlineButton.onClick.AddListener(() => {
+                SceneLoader.LoadScene(SceneLoader.Scene.LobbyScene);
+                _gameTypeManager.SetGameType(GameTypeManager.GameType.Online);
+            });
             quitButton.onClick.AddListener(Application.Quit);
 
             // Resetting (setting to null) all static objects used when loading main menu
@@ -27,6 +37,10 @@ namespace MainMenu.UI {
             Ship.ResetStaticObjects();
 
             Time.timeScale = 1f;
+        }
+
+        private void Start() {
+            _gameTypeManager = GameTypeManager.Instance;
         }
     }
 }

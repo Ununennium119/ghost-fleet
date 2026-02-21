@@ -1,7 +1,7 @@
 ﻿using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
-namespace Common {
+namespace Common.Utility {
     /// <summary>
     /// This class is responsible for loading scenes.
     /// </summary>

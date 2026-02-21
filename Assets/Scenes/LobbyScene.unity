@@ -4088,8 +4088,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2549df21facf4551a95d370e2a8f7530, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyMenu.Logic.LobbyManager
-  connectionType: 0
-  useRelay: 0
+  connectionType: 1
+  useRelay: 1
 --- !u!4 &1520371159
 Transform:
   m_ObjectHideFlags: 0
@@ -4633,7 +4633,7 @@ MonoBehaviour:
   ConnectionData:
     Address: 127.0.0.1
     Port: 7777
-    ServerListenAddress: 127.0.0.1
+    ServerListenAddress: 0.0.0.0
     ClientBindPort: 0
   DebugSimulator:
     PacketDelayMS: 0

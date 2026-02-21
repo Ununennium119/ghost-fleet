@@ -1,5 +1,6 @@
 ﻿using System;
-using Common;
+using Common.Logic;
+using Common.Utility;
 using LobbyMenu.Logic;
 using TMPro;
 using Unity.Netcode;
@@ -55,6 +56,10 @@ namespace WaitingMenu.UI {
             UpdatePlayerInfo();
         }
 
+        public override void OnDestroy() {
+            _multiplayerManager.OnPlayerDataListChanged -= OnPlayerDataListChangedAction;
+        }
+
 
         private void OnReadyChangedAction(object sender, EventArgs e) {
             UpdatePlayerInfo();
@@ -85,8 +90,10 @@ namespace WaitingMenu.UI {
                 var playerData = _multiplayerManager.GetPlayerData(1);
                 player2NameText.text =
                     $"{playerData.Name}{(_waitingManager.IsPlayerReady(playerData.ClientId) ? " (Ready)" : "")}";
+                readyButton.interactable = true;
             } else {
                 player2NameText.text = "";
+                readyButton.interactable = false;
             }
         }
     }

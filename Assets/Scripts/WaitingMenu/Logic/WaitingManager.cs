@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Common;
+using Common.Utility;
 using LobbyMenu.Logic;
 using Unity.Netcode;
-using Logger = Common.Logger;
+using Logger = Common.Utility.Logger;
 
 namespace WaitingMenu.Logic {
     /// <summary>

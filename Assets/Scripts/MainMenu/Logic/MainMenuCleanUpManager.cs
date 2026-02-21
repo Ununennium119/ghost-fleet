@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using Common.Logic;
 using LobbyMenu.Logic;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,6 +9,9 @@ namespace MainMenu.Logic {
     /// </summary>
     public class MainMenuCleanUpManager : MonoBehaviour {
         private void Awake() {
+            if (GameTypeManager.Instance != null) {
+                Destroy(GameTypeManager.Instance.gameObject);
+            }
             if (MultiplayerManager.Instance != null) {
                 Destroy(MultiplayerManager.Instance.gameObject);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Game.Enum;
 using Unity.Collections;
 using Unity.Netcode;
 
@@ -22,17 +23,24 @@ namespace Game {
         /// </summary>
         public FixedString64Bytes PlayerId;
 
+        /// <summary>
+        /// Specifies whether the play is player#1 or player#2.
+        /// </summary>
+        public Player Player;
+
 
         public bool Equals(PlayerData other) {
             return other.ClientId == ClientId
                    && other.Name == Name
-                   && other.PlayerId == PlayerId;
+                   && other.PlayerId == PlayerId
+                   && other.Player == Player;
         }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
             serializer.SerializeValue(ref ClientId);
             serializer.SerializeValue(ref Name);
             serializer.SerializeValue(ref PlayerId);
+            serializer.SerializeValue(ref Player);
         }
     }
 }

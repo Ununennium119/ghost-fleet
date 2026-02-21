@@ -1,5 +1,5 @@
 ﻿using System;
-using Common;
+using Common.Logic;
 using UnityEngine;
 
 namespace LobbyMenu.UI {

@@ -1,7 +1,10 @@
 ﻿using System;
+using Common.Logic;
 using Game.Enum;
 using Game.Manager;
+using MainMenu.Logic;
 using NaughtyAttributes;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,7 +12,7 @@ namespace Game {
     /// <summary>
     /// Represents a board cell.
     /// </summary>
-    public class Cell : MonoBehaviour {
+    public class Cell : NetworkBehaviour {
         private const float RAYCAST_MAX_DISTANCE = 50f;
 
 
@@ -44,12 +47,11 @@ namespace Game {
         private GameObject destroyedVisual;
 
 
-        /// <returns>True if there is a ship in the cell.</returns>
-        public bool IsFilled { get; set; } = false;
+        private readonly NetworkVariable<bool> _isFilledNetwork = new();
+        private readonly NetworkVariable<bool> _isAttackedNetwork = new();
 
-        /// <returns>True if the cell is attacked.</returns>
-        public bool IsAttacked { get; private set; } = false;
-
+        private bool _isFilled = false;
+        private bool _isAttacked = false;
 
         private bool _isHovered;
         private bool _isSelectable;
@@ -61,13 +63,55 @@ namespace Game {
         private Camera _mainCamera;
         private Collider _objectCollider;
 
+        private GameTypeManager _gameTypeManager;
+        private MultiplayerManager _multiplayerManager;
         private InputManager _inputManager;
         private GameManager _gameManager;
 
 
+        /// <returns>True if there is a ship in the cell.</returns>
+        public bool IsFilled() {
+            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
+                ? _isFilledNetwork.Value
+                : _isFilled;
+        }
+
+        public void SetFilled(bool value) {
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                _isFilledNetwork.Value = value;
+            } else {
+                _isFilled = value;
+            }
+        }
+
+
+        /// <returns>True if the cell is attacked.</returns>
+        public bool IsAttacked() {
+            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
+                ? _isAttackedNetwork.Value
+                : _isAttacked;
+        }
+
+        private void SetAttacked(bool value) {
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                _isAttackedNetwork.Value = value;
+            } else {
+                _isAttacked = value;
+                if (_isAttacked) {
+                    OnAnyAttack?.Invoke(this, new OnAnyAttackArgs { IsDestroyed = _isFilled});
+                }
+            }
+        }
+
+
         public void Initialize(Board board, Vector2Int position) {
-            _board = board;
-            _position = position;
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                InitializeClientRpc(new NetworkBehaviourReference(board), position);
+            } else {
+                _board = board;
+                _position = position;
+                gameObject.name = $"Cell({_position.x},{_position.y})";
+            }
         }
 
         public Vector2Int GetPosition() {
@@ -76,11 +120,14 @@ namespace Game {
 
 
         private void Awake() {
+            _gameTypeManager = GameTypeManager.Instance;
+
             _mainCamera = Camera.main;
             _objectCollider = GetComponent<Collider>();
         }
 
         private void Start() {
+            _multiplayerManager = MultiplayerManager.Instance;
             _inputManager = InputManager.Instance;
             _gameManager = GameManager.Instance;
 
@@ -93,6 +140,10 @@ namespace Game {
             targetedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
             attackedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
             destroyedVisual.GetComponent<Renderer>().material.renderQueue = 3100;
+        }
+
+        public override void OnNetworkSpawn() {
+            _isAttackedNetwork.OnValueChanged += OnIsAttackedChangedAction;
         }
 
         private void Update() {
@@ -112,14 +163,21 @@ namespace Game {
         private void OnClickPerformedAction(object sender, EventArgs e) {
             if (!_isTargetable || !_isHovered) return;
 
-            targetedVisual.SetActive(false);
-            if (IsFilled) {
-                destroyedVisual.SetActive(true);
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                OnClickPerformedActionServerRpc(new RpcParams());
             } else {
-                attackedVisual.SetActive(true);
+                SetAttacked(true);
+                targetedVisual.SetActive(false);
+                if (IsFilled()) {
+                    destroyedVisual.SetActive(true);
+                } else {
+                    attackedVisual.SetActive(true);
+                }
             }
-            IsAttacked = true;
-            OnAnyAttack?.Invoke(this, new OnAnyAttackArgs { IsDestroyed = IsFilled });
+        }
+
+        private void OnIsAttackedChangedAction(bool previousValue, bool newValue) {
+            OnAnyAttack?.Invoke(this, new OnAnyAttackArgs { IsDestroyed = IsFilled() });
         }
 
         private void OnPhaseChangedAction(object sender, GameManager.OnPhaseChangedArgs e) {
@@ -127,6 +185,7 @@ namespace Game {
                 GamePhase.Start => false,
                 GamePhase.Placement1 => _board.GetPlayer() == Player.Player1,
                 GamePhase.Placement2 => _board.GetPlayer() == Player.Player2,
+                GamePhase.Placement => _multiplayerManager.GetLocalPlayerData().Player == _board.GetPlayer(),
                 GamePhase.Attack1 => false,
                 GamePhase.Attack2 => false,
                 GamePhase.GameOver => false,
@@ -137,11 +196,51 @@ namespace Game {
                 GamePhase.Start => false,
                 GamePhase.Placement1 => false,
                 GamePhase.Placement2 => false,
-                GamePhase.Attack1 => _board.GetPlayer() == Player.Player2 && !IsAttacked,
-                GamePhase.Attack2 => _board.GetPlayer() == Player.Player1 && !IsAttacked,
+                GamePhase.Placement => false,
+                GamePhase.Attack1 => (
+                                         _gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline ||
+                                         _multiplayerManager.GetLocalPlayerData().Player == Player.Player1
+                                     ) &&
+                                     _board.GetPlayer() == Player.Player2 &&
+                                     !IsAttacked(),
+                GamePhase.Attack2 => (
+                                         _gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline ||
+                                         _multiplayerManager.GetLocalPlayerData().Player == Player.Player2
+                                     ) &&
+                                     _board.GetPlayer() == Player.Player1 &&
+                                     !IsAttacked(),
                 GamePhase.GameOver => false,
                 _ => throw new ArgumentOutOfRangeException()
             };
+        }
+
+
+        [ClientRpc]
+        private void InitializeClientRpc(NetworkBehaviourReference boardRef, Vector2Int position) {
+            if (boardRef.TryGet(out Board board)) {
+                _board = board;
+                _position = position;
+                gameObject.name = $"Cell({_position.x},{_position.y})";
+            }
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void OnClickPerformedActionServerRpc(RpcParams rpcParams) {
+            var sender = _multiplayerManager.GetPlayerData(rpcParams.Receive.SenderClientId).Player;
+            if (sender == _board.GetPlayer()) return;
+
+            SetAttacked(true);
+            HandleAttackVisualClientRpc(new ClientRpcParams());
+        }
+
+        [ClientRpc]
+        private void HandleAttackVisualClientRpc(ClientRpcParams _) {
+            targetedVisual.SetActive(false);
+            if (IsFilled()) {
+                destroyedVisual.SetActive(true);
+            } else {
+                attackedVisual.SetActive(true);
+            }
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System;
+using Common.Utility;
 using Game;
+using Game.Enum;
 using Unity.Netcode;
 using Unity.Services.Authentication;
-using UnityEngine;
 
-namespace Common {
+namespace Common.Logic {
     /// <summary>This class is responsible for handling multiplayer logic like spawning and syncing.</summary>
     /// <remarks>This class is singleton.</remarks>
     public class MultiplayerManager : NetworkBehaviour {
@@ -90,35 +91,11 @@ namespace Common {
         }
 
         /// <summary>
-        /// Retrieves the index of the player data associated with a specific client ID.
-        /// </summary>
-        /// <param name="clientId">The client ID of the player.</param>
-        /// <returns>The index of the player data in the list, or -1 if not found.</returns>
-        public int GetPlayerDataIndex(ulong clientId) {
-            for (var i = 0; i < _playerDataList.Count; i++) {
-                if (_playerDataList[i].ClientId == clientId) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        /// <summary>
         /// Retrieves the local player data using the local client ID.
         /// </summary>
         /// <returns>The local player's data.</returns>
         public PlayerData GetLocalPlayerData() {
             return GetPlayerData(NetworkManager.Singleton.LocalClientId);
-        }
-
-
-        /// <summary>
-        /// Kicks the player with the specified client ID from the game.
-        /// </summary>
-        /// <param name="clientId">The client ID of the player to kick.</param>
-        public void KickPlayer(ulong clientId) {
-            NetworkManager.Singleton.DisconnectClient(clientId);
-            HostOnClientDisconnectCallbackAction(clientId);
         }
 
 
@@ -138,6 +115,20 @@ namespace Common {
         }
 
 
+        /// <summary>
+        /// Retrieves the index of the player data associated with a specific client ID.
+        /// </summary>
+        /// <param name="clientId">The client ID of the player.</param>
+        /// <returns>The index of the player data in the list, or -1 if not found.</returns>
+        private int GetPlayerDataIndex(ulong clientId) {
+            for (var i = 0; i < _playerDataList.Count; i++) {
+                if (_playerDataList[i].ClientId == clientId) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
         /// <summary>
         /// Server RPC to change the player's name and ID.
         /// </summary>
@@ -223,6 +214,7 @@ namespace Common {
             _playerDataList.Add(
                 new PlayerData {
                     ClientId = clientId,
+                    Player = _playerDataList.Count == 0 ? Player.Player1 : Player.Player2
                 }
             );
             if (clientId == NetworkManager.Singleton.LocalClientId) {

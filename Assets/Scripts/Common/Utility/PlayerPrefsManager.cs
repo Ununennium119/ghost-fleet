@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Common {
+namespace Common.Utility {
     /// <summary>
     /// This class is responsible for accessing player preferences.
     /// </summary>
