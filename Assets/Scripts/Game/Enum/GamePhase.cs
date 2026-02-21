@@ -9,5 +9,6 @@
         Attack1,
         Attack2,
         GameOver,
+        Placement
     }
 }

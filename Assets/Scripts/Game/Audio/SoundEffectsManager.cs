@@ -1,9 +1,9 @@
 ﻿using System;
-using Common;
+using Common.Utility;
 using Game.Manager;
 using Game.ScriptableObjects;
 using UnityEngine;
-using Logger = Common.Logger;
+using Logger = Common.Utility.Logger;
 using Random = UnityEngine.Random;
 
 namespace Game.Audio {

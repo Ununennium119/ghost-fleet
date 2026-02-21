@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Common {
+namespace Common.Utility {
     /// <summary>
     /// This class is responsible for accessing player preferences.
     /// </summary>
@@ -8,6 +8,7 @@ namespace Common {
     public static class PlayerPrefsManager {
         private const string PLAYER_PREFS_MUSIC_VOLUME = "MusicVolume";
         private const string PLAYER_PREFS_SOUND_EFFECTS_VOLUME = "SoundEffectsVolume";
+        private const string PLAYER_PREFS_NAME = "Name";
 
 
         public static float GetMusicVolume(float defaultValue) {
@@ -27,6 +28,15 @@ namespace Common {
         public static void SetSoundEffectsVolume(float volume) {
             PlayerPrefs.SetFloat(PLAYER_PREFS_SOUND_EFFECTS_VOLUME, volume);
             PlayerPrefs.Save();
+        }
+
+
+        public static string GetPlayerName() {
+            return PlayerPrefs.GetString(PLAYER_PREFS_NAME, $"Player{Random.Range(100000, 999999)}");
+        }
+
+        public static void SetPlayerName(string name) {
+            PlayerPrefs.SetString(PLAYER_PREFS_NAME, name);
         }
     }
 }
