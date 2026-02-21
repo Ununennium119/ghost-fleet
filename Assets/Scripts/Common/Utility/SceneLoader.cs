@@ -1,6 +1,7 @@
-﻿using UnityEngine.SceneManagement;
+﻿using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
-namespace Common {
+namespace Common.Utility {
     /// <summary>
     /// This class is responsible for loading scenes.
     /// </summary>
@@ -9,6 +10,8 @@ namespace Common {
             MainMenuScene,
             LoadingScene,
             GameScene,
+            LobbyScene,
+            WaitingScene
         }
 
 
@@ -22,6 +25,14 @@ namespace Common {
         public static void LoadScene(Scene scene) {
             _targetScene = scene;
             SceneManager.LoadScene(nameof(Scene.LoadingScene));
+        }
+
+        /// <summary>
+        /// Loads a networked scene directly.
+        /// </summary>
+        /// <param name="scene">The scene to load.</param>
+        public static void LoadNetwork(Scene scene) {
+            NetworkManager.Singleton.SceneManager.LoadScene(scene.ToString(), LoadSceneMode.Single);
         }
 
         /// <summary>

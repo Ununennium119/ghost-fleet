@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Logger = Common.Logger;
+using Logger = Common.Utility.Logger;
 
 namespace Game.Manager {
     /// <summary>This class is responsible for game inputs.</summary>

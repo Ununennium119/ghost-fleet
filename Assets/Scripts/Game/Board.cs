@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Game.Enum;
-using Game.Manager;
+using MainMenu.Logic;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Game {
     /// <summary>
     /// Represents a board.
     /// </summary>
-    public class Board : MonoBehaviour {
+    public class Board : NetworkBehaviour {
         private const float CELL_SIZE = 1.0f;
         private const float CELL_SPACING = 0.1f;
 
@@ -27,7 +28,12 @@ namespace Game {
         private GameObject cellsContainer;
 
 
+        private readonly NetworkList<NetworkObjectReference> _cellReferencesFlattened = new();
+
         private Cell[,] _cells;
+
+
+        private GameTypeManager _gameTypeManager;
 
 
         /// <returns>The player owning the board.</returns>
@@ -73,8 +79,8 @@ namespace Game {
                 ) {
                     return false;
                 }
-                var cell = _cells[position.x, position.y];
-                if (!oldPositions.Contains(position) && cell.IsFilled) {
+                var cell = GetCell(position);
+                if (!oldPositions.Contains(position) && cell.IsFilled()) {
                     return false;
                 }
                 cellsToFill.Add(cell);
@@ -82,15 +88,15 @@ namespace Game {
 
             var cellsToUnfill = new List<Cell>();
             foreach (var position in oldPositions) {
-                var cell = _cells[position.x, position.y];
+                var cell = GetCell(position);
                 cellsToUnfill.Add(cell);
             }
 
             foreach (var cell in cellsToUnfill) {
-                cell.IsFilled = false;
+                cell.SetFilled(false);
             }
             foreach (var cell in cellsToFill) {
-                cell.IsFilled = true;
+                cell.SetFilled(true);
             }
             return true;
         }
@@ -98,6 +104,7 @@ namespace Game {
         /// <returns>True if all the ships are placed on the board.</returns>
         public bool AreShipsOnBoard() {
             return ships.All(ship => ship.IsOnBoard());
+            ;
         }
 
         /// <returns>
@@ -107,15 +114,30 @@ namespace Game {
             var cells = (
                 from ship in ships
                 from position in ship.GetPositions()
-                select _cells[position.x, position.y]
+                select GetCell(position)
             ).ToList();
-            return cells.All(cell => cell.IsAttacked);
+            return cells.All(cell => cell.IsAttacked());
         }
 
 
         private void Awake() {
-            var containerPosition = cellsContainer.transform.transform.position;
+            _gameTypeManager = GameTypeManager.Instance;
+
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline) {
+                InstantiateCells();
+            }
+        }
+
+        private void Start() {
+            if (IsServer) {
+                InstantiateCells();
+            }
+        }
+
+
+        private void InstantiateCells() {
             _cells = new Cell[boardSize, boardSize];
+            var containerPosition = cellsContainer.transform.transform.position;
             for (var x = 0; x < boardSize; x++) {
                 for (var z = 0; z < boardSize; z++) {
                     var cellGameObject = Instantiate(
@@ -128,10 +150,36 @@ namespace Game {
                         rotation: Quaternion.identity,
                         parent: cellsContainer.transform
                     );
+
+                    if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                        var networkObject = cellGameObject.GetComponent<NetworkObject>();
+                        networkObject.Spawn(true);
+                        networkObject.TrySetParent(cellsContainer.transform);
+                    }
+
                     var cell = cellGameObject.GetComponent<Cell>();
                     cell.Initialize(this, new Vector2Int(x, z));
-                    _cells[x, z] = cell;
+
+                    if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                        _cellReferencesFlattened.Add(cell.NetworkObject);
+                    } else {
+                        _cells[x, z] = cell;
+                    }
                 }
+            }
+        }
+
+        private Cell GetCell(Vector2Int position) {
+            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                var index = position.x * boardSize + position.y;
+                var cellReference = _cellReferencesFlattened[index];
+                if (cellReference.TryGet(out var cellNetworkObject)) {
+                    var cell = cellNetworkObject.GetComponent<Cell>();
+                    return cell;
+                }
+                throw new InvalidOperationException($"Failed to get network object of cell at position {position}");
+            } else {
+                return _cells[position.x, position.y];
             }
         }
     }

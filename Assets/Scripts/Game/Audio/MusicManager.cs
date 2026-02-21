@@ -1,6 +1,6 @@
-﻿using Common;
+﻿using Common.Utility;
 using UnityEngine;
-using Logger = Common.Logger;
+using Logger = Common.Utility.Logger;
 
 namespace Game.Audio {
     /// <summary>
