@@ -14,42 +14,26 @@ namespace Game {
         private const float RAYCAST_MAX_DISTANCE = 50f;
 
 
-        /// <summary>
-        /// This event is triggered whenever selection of any ship changes.
-        /// </summary>
         public static event EventHandler<OnAnySelectionChangedArgs> OnAnySelectionChanged;
         public class OnAnySelectionChangedArgs : EventArgs {
             public bool IsSelected;
             public Ship Ship;
         }
 
-
-        /// <summary>
-        /// This event is triggered whenever any ship is moved.
-        /// </summary>
         public static event EventHandler OnAnyShipPlaced;
 
 
-        /// <summary>
-        /// Resets the static objects.
-        /// </summary>
         public static void ResetStaticObjects() {
             OnAnySelectionChanged = null;
             OnAnyShipPlaced = null;
         }
 
 
-        /// <summary>
-        /// This event is triggered whenever hover of the ship changes.
-        /// </summary>
         public event EventHandler<OnHoverChangedArgs> OnHoverChanged;
         public class OnHoverChangedArgs : EventArgs {
             public bool IsHovered;
         }
 
-        /// <summary>
-        /// This event is triggered whenever selection of the ship changes.
-        /// </summary>
         public event EventHandler<OnSelectionChangedArgs> OnSelectionChanged;
         public class OnSelectionChangedArgs : EventArgs {
             public bool IsSelected;
@@ -71,11 +55,11 @@ namespace Game {
 
 
         private readonly NetworkVariable<Direction> _directionNetwork = new();
-        private readonly NetworkVariable<Vector2Int> _boardPositionNetwork = new();
+        private readonly NetworkVariable<Vector2Int> _coordinateNetwork = new();
         private readonly NetworkVariable<bool> _isOnBoardNetwork = new();
 
         private Direction _direction;
-        private Vector2Int _boardPosition;
+        private Vector2Int _coordinate;
         private bool _isOnBoard = false;
 
         private bool _isSelectable;
@@ -93,13 +77,13 @@ namespace Game {
 
 
         public Direction GetDirection() {
-            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
+            return _gameTypeManager.IsOnline()
                 ? _directionNetwork.Value
                 : _direction;
         }
 
         private void SetDirection(Direction value) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+            if (_gameTypeManager.IsOnline()) {
                 _directionNetwork.Value = value;
             } else {
                 _direction = value;
@@ -107,29 +91,29 @@ namespace Game {
         }
 
 
-        public Vector2Int GetBoardPosition() {
-            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
-                ? _boardPositionNetwork.Value
-                : _boardPosition;
+        public Vector2Int GetCoordinate() {
+            return _gameTypeManager.IsOnline()
+                ? _coordinateNetwork.Value
+                : _coordinate;
         }
 
-        private void SetBoardPosition(Vector2Int value) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
-                _boardPositionNetwork.Value = value;
+        private void SetCoordinate(Vector2Int value) {
+            if (_gameTypeManager.IsOnline()) {
+                _coordinateNetwork.Value = value;
             } else {
-                _boardPosition = value;
+                _coordinate = value;
             }
         }
 
 
         public bool IsOnBoard() {
-            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
+            return _gameTypeManager.IsOnline()
                 ? _isOnBoardNetwork.Value
                 : _isOnBoard;
         }
 
         private void SetOnBoard(bool value) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+            if (_gameTypeManager.IsOnline()) {
                 _isOnBoardNetwork.Value = value;
             } else {
                 _isOnBoard = value;
@@ -145,50 +129,77 @@ namespace Game {
         public int GetSize() => size;
 
 
-        /// <returns>List of positions which this ship fills. Empty list if the ship is not on the board.</returns>
+        /// <returns>List of coordintes which this ship fills. Empty list if the ship is not on the board.</returns>
         /// <exception cref="ArgumentOutOfRangeException">If direction of the ship is invalid.</exception>
-        public List<Vector2Int> GetPositions() {
+        public List<Vector2Int> GetCoordinates() {
             if (!IsOnBoard()) return new List<Vector2Int>();
 
-            var positions = new List<Vector2Int>();
+            var coordinates = new List<Vector2Int>();
             for (var i = 0; i < size; i++) {
                 switch (GetDirection()) {
                     case Direction.Up:
-                        positions.Add(GetBoardPosition() + new Vector2Int(0, i));
+                        coordinates.Add(GetCoordinate() + new Vector2Int(0, i));
                         break;
                     case Direction.Down:
-                        positions.Add(GetBoardPosition() + new Vector2Int(0, -i));
+                        coordinates.Add(GetCoordinate() + new Vector2Int(0, -i));
                         break;
                     case Direction.Left:
-                        positions.Add(GetBoardPosition() + new Vector2Int(-i, 0));
+                        coordinates.Add(GetCoordinate() + new Vector2Int(-i, 0));
                         break;
                     case Direction.Right:
-                        positions.Add(GetBoardPosition() + new Vector2Int(i, 0));
+                        coordinates.Add(GetCoordinate() + new Vector2Int(i, 0));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            return positions;
+            return coordinates;
         }
 
 
         private void Awake() {
-            _gameTypeManager = GameTypeManager.Instance;
+            ResolveSingletonsAwake();
+            CacheReferences();
 
-            _mainCamera = Camera.main;
-            _objectCollider = GetComponent<Collider>();
-
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline) {
+            if (_gameTypeManager.IsOffline()) {
                 SetDirection(startingDirection);
             }
         }
 
         private void Start() {
+            ResolveSingletonsStart();
+            SubscribeToEvents();
+        }
+
+        public override void OnNetworkSpawn() {
+            if (_gameTypeManager.IsOnline() && IsServer) {
+                SetDirection(startingDirection);
+            }
+
+            _isOnBoardNetwork.OnValueChanged += OnIsOnBoardValueChangedAction;
+        }
+
+        private void Update() {
+            HandleHover();
+        }
+
+
+        private void ResolveSingletonsAwake() {
+            _gameTypeManager = GameTypeManager.Instance;
+        }
+
+        private void CacheReferences() {
+            _mainCamera = Camera.main;
+            _objectCollider = GetComponent<Collider>();
+        }
+
+        private void ResolveSingletonsStart() {
             _inputManager = InputManager.Instance;
             _gameManager = GameManager.Instance;
             _multiplayerManager = MultiplayerManager.Instance;
+        }
 
+        private void SubscribeToEvents() {
             _inputManager.OnClickPerformed += OnClickPerformedAction;
 
             _gameManager.OnPhaseChanged += OnPhaseChangedAction;
@@ -197,15 +208,7 @@ namespace Game {
             OnAnySelectionChanged += OnAnySelectionChangedAction;
         }
 
-        public override void OnNetworkSpawn() {
-            if (IsServer) {
-                SetDirection(startingDirection);
-            }
-
-            _isOnBoardNetwork.OnValueChanged += OnIsOnBoardValueChangedAction;
-        }
-
-        private void Update() {
+        private void HandleHover() {
             if (!_isSelectable) return;
 
             var newIsHovered = false;
@@ -272,54 +275,50 @@ namespace Game {
                 }
             );
             if (_isSelected) {
-                _placeholderGameObject = Instantiate(
-                    original: placeholderPrefab,
-                    position: transform.position,
-                    rotation: transform.rotation,
-                    parent: null
-                );
-                var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
-                placeholder.direction = GetDirection();
-                placeholder.size = size;
+                InstantiatePlaceholder();
             } else {
-                var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
-                if (placeholder.IsOnBoard) {
-                    if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
-                        MoveShipRpc(
-                            placeholder.BoardPosition,
-                            placeholder.direction,
-                            _placeholderGameObject.transform.position,
-                            _placeholderGameObject.transform.rotation,
-                            new RpcParams()
-                        );
-                    } else {
-                        MoveShip(
-                            placeholder.BoardPosition,
-                            placeholder.direction,
-                            _placeholderGameObject.transform.position,
-                            _placeholderGameObject.transform.rotation
-                        );
-                    }
-                }
+                MoveToPlaceholder();
                 Destroy(_placeholderGameObject);
             }
         }
 
-        private void MoveShip(Vector2Int boardPosition, Direction direction, Vector3 position, Quaternion rotation) {
-            var isMoved = board.MoveShip(this, boardPosition, direction);
-            if (isMoved) {
-                SetBoardPosition(boardPosition);
-                SetDirection(direction);
-                SetOnBoard(true);
-                transform.position = position;
-                transform.rotation = rotation;
-            }
+        private void InstantiatePlaceholder() {
+            _placeholderGameObject = Instantiate(
+                original: placeholderPrefab,
+                position: transform.position,
+                rotation: transform.rotation,
+                parent: null
+            );
+            var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
+            placeholder.direction = GetDirection();
+            placeholder.size = size;
         }
 
-
+        private void MoveToPlaceholder() {
+            var placeholder = _placeholderGameObject.GetComponent<PlaceholderShip>();
+            if (placeholder.IsOnBoard) {
+                if (_gameTypeManager.IsOnline()) {
+                    MoveServerRpc(
+                        placeholder.Coordinate,
+                        placeholder.direction,
+                        _placeholderGameObject.transform.position,
+                        _placeholderGameObject.transform.rotation,
+                        new RpcParams()
+                    );
+                } else {
+                    Move(
+                        placeholder.Coordinate,
+                        placeholder.direction,
+                        _placeholderGameObject.transform.position,
+                        _placeholderGameObject.transform.rotation
+                    );
+                }
+            }
+        }
+        
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        private void MoveShipRpc(
-            Vector2Int boardPosition,
+        private void MoveServerRpc(
+            Vector2Int coordinate,
             Direction direction,
             Vector3 position,
             Quaternion rotation,
@@ -328,7 +327,18 @@ namespace Game {
             var sender = _multiplayerManager.GetPlayerData(rpcParams.Receive.SenderClientId).Player;
             if (sender != player) return;
 
-            MoveShip(boardPosition, direction, position, rotation);
+            Move(coordinate, direction, position, rotation);
+        }
+
+        private void Move(Vector2Int coordinate, Direction direction, Vector3 position, Quaternion rotation) {
+            var isMoved = board.MoveShip(this, coordinate, direction);
+            if (isMoved) {
+                SetCoordinate(coordinate);
+                SetDirection(direction);
+                SetOnBoard(true);
+                transform.position = position;
+                transform.rotation = rotation;
+            }
         }
     }
 }

@@ -5,9 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LobbyMenu.UI {
-    /// <summary>
-    /// The UI for creating a new multiplayer lobby.
-    /// </summary>
     public class CreateLobbyUI : MonoBehaviour {
         [SerializeField, Tooltip("The lobby name input")]
         private TMP_InputField lobbyNameInput;
@@ -18,13 +15,10 @@ namespace LobbyMenu.UI {
         [SerializeField, Tooltip("The close button")]
         private Button closeButton;
 
-        
-        private LobbyManager _lobbyManager;
-        
 
-        /// <summary>
-        /// Shows the UI for creating a new lobby.
-        /// </summary>
+        private LobbyManager _lobbyManager;
+
+
         public void Show() {
             gameObject.SetActive(true);
             lobbyNameInput.Select();
@@ -32,6 +26,16 @@ namespace LobbyMenu.UI {
 
 
         private void Awake() {
+            AddButtonListeners();
+        }
+
+        private void Start() {
+            ResolveSingletons();
+            Hide();
+        }
+
+
+        private void AddButtonListeners() {
             createButton.onClick.AddListener(() => {
                 _lobbyManager.CreateLobby(lobbyNameInput.text, lobbyPrivateToggle.isOn);
             });
@@ -41,12 +45,9 @@ namespace LobbyMenu.UI {
             });
         }
 
-        private void Start() {
+        private void ResolveSingletons() {
             _lobbyManager = LobbyManager.Instance;
-            
-            Hide();
         }
-
 
         private void Hide() {
             gameObject.SetActive(false);

@@ -201,7 +201,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1539290777}
   m_HandleRect: {fileID: 1539290776}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -7095,9 +7095,9 @@ SceneRoots:
   m_Roots:
   - {fileID: 1853876781}
   - {fileID: 2126421261}
+  - {fileID: 1995047387}
   - {fileID: 1507548776}
   - {fileID: 1379690489}
-  - {fileID: 1995047387}
   - {fileID: 1113404284}
   - {fileID: 566192104}
   - {fileID: 1520371159}

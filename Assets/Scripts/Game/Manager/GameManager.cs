@@ -10,39 +10,26 @@ using UnityEngine.SceneManagement;
 using Logger = Common.Utility.Logger;
 
 namespace Game.Manager {
-    /// <summary>This class is responsible for managing game state.</summary>
     /// <remarks>This class is singleton.</remarks>
     public class GameManager : NetworkBehaviour {
         public static GameManager Instance { get; private set; }
 
 
-        /// <summary>
-        /// This event is triggered whenever the player toggles the pause state.
-        /// </summary>
         public event EventHandler<OnPauseToggledArgs> OnPauseToggled;
         public class OnPauseToggledArgs : EventArgs {
             public bool IsGamePaused;
         }
 
-        /// <summary>
-        /// This event is triggered whenever the game phase is changed.
-        /// </summary>
         public event EventHandler<OnPhaseChangedArgs> OnPhaseChanged;
         public class OnPhaseChangedArgs : EventArgs {
             public GamePhase GamePhase;
         }
 
-        /// <summary>
-        /// This event is triggered whenever a player wins the game.
-        /// </summary>
         public event EventHandler<OnWinArgs> OnWin;
         public class OnWinArgs : EventArgs {
             public Player Winner;
         }
 
-        /// <summary>
-        /// This event is triggered whenever the placement is ready for a player.
-        /// </summary>
         public event EventHandler<OnPlacementReadyArgs> OnPlacementReady;
         public class OnPlacementReadyArgs : EventArgs {
             public Player Player;
@@ -70,13 +57,13 @@ namespace Game.Manager {
 
 
         public GamePhase GetCurrentGamePhase() {
-            return _gameTypeManager.GetGameType() == GameTypeManager.GameType.Online
+            return _gameTypeManager.IsOnline()
                 ? _currentGamePhaseNetwork.Value
                 : _currentGamePhase;
         }
 
         private void SetCurrentGamePhase(GamePhase value) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+            if (_gameTypeManager.IsOnline()) {
                 _currentGamePhaseNetwork.Value = value;
             } else {
                 _currentGamePhase = value;
@@ -85,9 +72,6 @@ namespace Game.Manager {
         }
 
 
-        /// <param name="player">The player to return his board.</param>
-        /// <returns>The player's board.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">If player is invalid.</exception>
         public Board GetPlayerBoard(Player player) {
             return player switch {
                 Player.Player1 => board1,
@@ -96,9 +80,6 @@ namespace Game.Manager {
             };
         }
 
-        /// <summary>
-        /// Toggles game pause state.
-        /// </summary>
         public void TogglePause() {
             _isGamePaused = !_isGamePaused;
             OnPauseToggled?.Invoke(this, new OnPauseToggledArgs { IsGamePaused = _isGamePaused });
@@ -114,32 +95,22 @@ namespace Game.Manager {
 
 
         private void Awake() {
-            Logger.LogInitializingInstance(this);
-            if (Instance != null) {
-                Logger.LogMultipleInstancesError(this);
-                Destroy(gameObject);
-                return;
-            }
-            Instance = this;
-            Logger.LogInstanceInitialized(this);
-
-            _gameTypeManager = GameTypeManager.Instance;
+            InitializeSingleton();
+            ResolveSingletonsAwake();
         }
 
         private void Start() {
-            _multiplayerManager = MultiplayerManager.Instance;
-            _musicManager = MusicManager.Instance;
+            ResolveSingletonsStart();
+            SubscribeToEvents();
+        }
 
-            Cell.OnAnyAttack += OnAnyAttackAction;
-
-            if (IsServer) {
-                NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompletedAction;
-            }
+        public override void OnNetworkSpawn() {
+            SubscribeToNetworkEvents();
         }
 
         private void LateStart() {
             _isLateStarted = true;
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline) {
+            if (_gameTypeManager.IsOffline()) {
                 SetCurrentGamePhase(GamePhase.Start);
                 NextPhase();
             }
@@ -151,7 +122,36 @@ namespace Game.Manager {
             }
         }
 
-        public override void OnNetworkSpawn() {
+
+        private void InitializeSingleton() {
+            Logger.LogInitializingInstance(this);
+            if (Instance != null) {
+                Logger.LogMultipleInstancesError(this);
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            Logger.LogInstanceInitialized(this);
+        }
+
+        private void ResolveSingletonsAwake() {
+            _gameTypeManager = GameTypeManager.Instance;
+        }
+
+        private void ResolveSingletonsStart() {
+            _multiplayerManager = MultiplayerManager.Instance;
+            _musicManager = MusicManager.Instance;
+        }
+
+        private void SubscribeToEvents() {
+            Cell.OnAnyAttack += OnAnyAttackAction;
+
+            if (_gameTypeManager.IsOnline() && IsServer) {
+                NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompletedAction;
+            }
+        }
+
+        private void SubscribeToNetworkEvents() {
             _currentGamePhaseNetwork.OnValueChanged += OnCurrentGamePhaseValueChanged;
             _placementReadyPlayers.OnListChanged += OnPlacementReadyPlayersListChangedAction;
         }
@@ -181,32 +181,28 @@ namespace Game.Manager {
             if (board1.IsDestroyed()) {
                 OnWin?.Invoke(this, new OnWinArgs { Winner = Player.Player2 });
                 _musicManager.PlayVictoryMusic();
-                if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline || IsServer) {
+                if (_gameTypeManager.IsOffline() || IsServer) {
                     SetCurrentGamePhase(GamePhase.GameOver);
                 }
             } else if (board2.IsDestroyed()) {
                 OnWin?.Invoke(this, new OnWinArgs { Winner = Player.Player1 });
                 _musicManager.PlayVictoryMusic();
-                if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline || IsServer) {
+                if (_gameTypeManager.IsOffline() || IsServer) {
                     SetCurrentGamePhase(GamePhase.GameOver);
                 }
             } else if (!e.IsDestroyed) {
-                if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline || IsServer) {
+                if (_gameTypeManager.IsOffline() || IsServer) {
                     NextPhase();
                 }
             }
         }
 
 
-        /// <summary>
-        /// Changes the phase to the next phase.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">If the current phase is invalid.</exception>
         private void NextPhase() {
             if (GetCurrentGamePhase() == GamePhase.GameOver) return;
 
             var newPhase = GetCurrentGamePhase() switch {
-                GamePhase.Start => _gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline
+                GamePhase.Start => _gameTypeManager.IsOffline()
                     ? GamePhase.Placement1
                     : GamePhase.Placement,
                 GamePhase.Placement => GamePhase.Attack1,
@@ -216,7 +212,6 @@ namespace Game.Manager {
             };
             SetCurrentGamePhase(newPhase);
         }
-
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         private void SetPlacementReadyServerRpc(RpcParams rpcParams) {

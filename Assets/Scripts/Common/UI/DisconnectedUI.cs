@@ -5,9 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Common.UI {
-    /// <summary>
-    /// The UI displayed when the client is disconnected from the network.
-    /// </summary>
     public class DisconnectedUI : NetworkBehaviour {
         [SerializeField, Tooltip("The main menu button")]
         private Button mainMenuButton;
@@ -17,24 +14,46 @@ namespace Common.UI {
 
 
         private void Awake() {
-            mainMenuButton.onClick.AddListener(() => SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene));
+            AddButtonListeners();
         }
 
         private void Start() {
-            _gameTypeManager = GameTypeManager.Instance;
-
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
-                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
-            }
-
+            ResolveSingletons();
+            SubscribeToEvents();
             Hide();
         }
 
         public override void OnDestroy() {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+            UnsubscribeFromEvents();
+        }
+
+
+        private void AddButtonListeners() {
+            mainMenuButton.onClick.AddListener(() => SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene));
+        }
+
+        private void ResolveSingletons() {
+            _gameTypeManager = GameTypeManager.Instance;
+        }
+
+        private void SubscribeToEvents() {
+            if (_gameTypeManager.IsOnline()) {
+                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallbackAction;
+            }
+        }
+
+        private void UnsubscribeFromEvents() {
+            if (_gameTypeManager.IsOnline()) {
                 if (NetworkManager.Singleton != null) {
-                    NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectCallback;
+                    NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectCallbackAction;
                 }
+            }
+        }
+
+        
+        private void OnClientDisconnectCallbackAction(ulong clientId) {
+            if (clientId == NetworkManager.LocalClientId || clientId == NetworkManager.ServerClientId) {
+                Show();
             }
         }
 
@@ -46,15 +65,6 @@ namespace Common.UI {
 
         private void Hide() {
             gameObject.SetActive(false);
-        }
-
-        /// <remarks>
-        /// Invoked when the <see cref="NetworkManager.OnClientDisconnectCallback"/> event is triggered.
-        /// </remarks>
-        private void OnClientDisconnectCallback(ulong clientId) {
-            if (clientId == NetworkManager.LocalClientId || clientId == NetworkManager.ServerClientId) {
-                Show();
-            }
         }
     }
 }

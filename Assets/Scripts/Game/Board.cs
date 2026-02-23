@@ -7,9 +7,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 namespace Game {
-    /// <summary>
-    /// Represents a board.
-    /// </summary>
     public class Board : NetworkBehaviour {
         private const float CELL_SIZE = 1.0f;
         private const float CELL_SPACING = 0.1f;
@@ -32,63 +29,70 @@ namespace Game {
 
         private Cell[,] _cells;
 
-
         private GameTypeManager _gameTypeManager;
 
 
-        /// <returns>The player owning the board.</returns>
         public Player GetPlayer() {
             return player;
         }
 
-        /// <summary>
-        /// Moves the ship to the target position on the board.
-        /// </summary>
-        /// <param name="ship"> The ship to move.</param>
-        /// <param name="targetPosition">The position to move the ship into.</param>
-        /// <param name="targetDirection">The new direction of the ship.</param>
-        public bool MoveShip(Ship ship, Vector2Int targetPosition, Direction targetDirection) {
-            var oldPositions = ship.GetPositions();
-            var newPositions = new List<Vector2Int>();
+
+        private Cell GetCell(Vector2Int position) {
+            if (_gameTypeManager.IsOnline()) {
+                var index = position.x * boardSize + position.y;
+                var cellReference = _cellReferencesFlattened[index];
+                if (cellReference.TryGet(out var cellNetworkObject)) {
+                    var cell = cellNetworkObject.GetComponent<Cell>();
+                    return cell;
+                }
+                throw new InvalidOperationException($"Failed to get network object of cell at position {position}");
+            }
+            return _cells[position.x, position.y];
+        }
+
+
+        public bool MoveShip(Ship ship, Vector2Int targetCoordinate, Direction targetDirection) {
+            var newCoordinates = new List<Vector2Int>();
             for (var i = 0; i < ship.GetSize(); i++) {
                 switch (targetDirection) {
                     case Direction.Up:
-                        newPositions.Add(targetPosition + new Vector2Int(0, i));
+                        newCoordinates.Add(targetCoordinate + new Vector2Int(0, i));
                         break;
                     case Direction.Down:
-                        newPositions.Add(targetPosition + new Vector2Int(0, -i));
+                        newCoordinates.Add(targetCoordinate + new Vector2Int(0, -i));
                         break;
                     case Direction.Left:
-                        newPositions.Add(targetPosition + new Vector2Int(-i, 0));
+                        newCoordinates.Add(targetCoordinate + new Vector2Int(-i, 0));
                         break;
                     case Direction.Right:
-                        newPositions.Add(targetPosition + new Vector2Int(i, 0));
+                        newCoordinates.Add(targetCoordinate + new Vector2Int(i, 0));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
 
+            var oldCoordinates = ship.GetCoordinates();
             var cellsToFill = new List<Cell>();
-            foreach (var position in newPositions) {
+            foreach (var coordinate in newCoordinates) {
                 if (
-                    position.x < 0 ||
-                    position.x >= boardSize ||
-                    position.y < 0 ||
-                    position.y >= boardSize
+                    coordinate.x < 0 ||
+                    coordinate.x >= boardSize ||
+                    coordinate.y < 0 ||
+                    coordinate.y >= boardSize
                 ) {
                     return false;
                 }
-                var cell = GetCell(position);
-                if (!oldPositions.Contains(position) && cell.IsFilled()) {
+                var cell = GetCell(coordinate);
+                if (!oldCoordinates.Contains(coordinate) && cell.HasShip()) {
                     return false;
                 }
                 cellsToFill.Add(cell);
             }
 
             var cellsToUnfill = new List<Cell>();
-            foreach (var position in oldPositions) {
-                var cell = GetCell(position);
+            foreach (var coordinate in oldCoordinates) {
+                var cell = GetCell(coordinate);
                 cellsToUnfill.Add(cell);
             }
 
@@ -101,19 +105,14 @@ namespace Game {
             return true;
         }
 
-        /// <returns>True if all the ships are placed on the board.</returns>
         public bool AreShipsOnBoard() {
             return ships.All(ship => ship.IsOnBoard());
-            ;
         }
 
-        /// <returns>
-        /// True if all the ships are destroyed.
-        /// </returns>
         public bool IsDestroyed() {
             var cells = (
                 from ship in ships
-                from position in ship.GetPositions()
+                from position in ship.GetCoordinates()
                 select GetCell(position)
             ).ToList();
             return cells.All(cell => cell.IsAttacked());
@@ -121,17 +120,22 @@ namespace Game {
 
 
         private void Awake() {
-            _gameTypeManager = GameTypeManager.Instance;
+            ResolveSingletons();
 
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Offline) {
+            if (_gameTypeManager.IsOffline()) {
                 InstantiateCells();
             }
         }
 
         private void Start() {
-            if (IsServer) {
+            if (_gameTypeManager.IsOnline() && IsServer) {
                 InstantiateCells();
             }
+        }
+
+
+        private void ResolveSingletons() {
+            _gameTypeManager = GameTypeManager.Instance;
         }
 
 
@@ -151,35 +155,24 @@ namespace Game {
                         parent: cellsContainer.transform
                     );
 
-                    if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                    if (_gameTypeManager.IsOnline()) {
                         var networkObject = cellGameObject.GetComponent<NetworkObject>();
                         networkObject.Spawn(true);
                         networkObject.TrySetParent(cellsContainer.transform);
                     }
 
                     var cell = cellGameObject.GetComponent<Cell>();
-                    cell.Initialize(this, new Vector2Int(x, z));
+                    cell.Initialize(
+                        board: this,
+                        coordinate: new Vector2Int(x, z)
+                    );
 
-                    if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+                    if (_gameTypeManager.IsOnline()) {
                         _cellReferencesFlattened.Add(cell.NetworkObject);
                     } else {
                         _cells[x, z] = cell;
                     }
                 }
-            }
-        }
-
-        private Cell GetCell(Vector2Int position) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
-                var index = position.x * boardSize + position.y;
-                var cellReference = _cellReferencesFlattened[index];
-                if (cellReference.TryGet(out var cellNetworkObject)) {
-                    var cell = cellNetworkObject.GetComponent<Cell>();
-                    return cell;
-                }
-                throw new InvalidOperationException($"Failed to get network object of cell at position {position}");
-            } else {
-                return _cells[position.x, position.y];
             }
         }
     }

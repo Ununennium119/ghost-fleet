@@ -5,9 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace LobbyMenu.UI {
-    /// <summary>
-    /// Represents a single lobby item in the lobby list UI.
-    /// </summary>
     public class SingleLobbyUI : MonoBehaviour {
         [SerializeField, Tooltip("The lobby name text")]
         private TextMeshProUGUI lobbyName;
@@ -15,14 +12,11 @@ namespace LobbyMenu.UI {
         private Button joinButton;
 
 
-        private LobbyManager _lobbyManager;
         private string _lobbyId;
 
+        private LobbyManager _lobbyManager;
 
-        /// <summary>
-        /// Sets the lobby information, including the lobby name and ID.
-        /// </summary>
-        /// <param name="lobby">The <see cref="Lobby"/> object containing the lobby information.</param>
+
         public void SetLobby(Lobby lobby) {
             lobbyName.text = lobby.Name;
             _lobbyId = lobby.Id;
@@ -30,10 +24,19 @@ namespace LobbyMenu.UI {
 
 
         private void Awake() {
-            joinButton.onClick.AddListener(() => _lobbyManager.JoinLobbyById(_lobbyId));
+            AddButtonListeners();
         }
 
         private void Start() {
+            ResolveSingletons();
+        }
+
+
+        private void AddButtonListeners() {
+            joinButton.onClick.AddListener(() => _lobbyManager.JoinLobbyById(_lobbyId));
+        }
+
+        private void ResolveSingletons() {
             _lobbyManager = LobbyManager.Instance;
         }
     }

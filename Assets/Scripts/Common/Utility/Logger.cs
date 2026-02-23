@@ -1,9 +1,6 @@
 using UnityEngine;
 
 namespace Common.Utility {
-    /// <summary>
-    /// A utility class for logging different types of repeating messages.
-    /// </summary>
     public static class Logger {
         public static void LogMultipleInstancesError(Object obj) {
             Debug.LogError($"There is more than one {GetClassFullName(obj)} in the scene! Destroying this one...");

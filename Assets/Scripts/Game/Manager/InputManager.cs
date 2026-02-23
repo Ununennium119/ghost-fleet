@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 using Logger = Common.Utility.Logger;
 
 namespace Game.Manager {
-    /// <summary>This class is responsible for game inputs.</summary>
     /// <remarks>This class is singleton</remarks>
     public class InputManager : MonoBehaviour {
         public static InputManager Instance { get; private set; }
@@ -24,6 +23,18 @@ namespace Game.Manager {
 
 
         private void Awake() {
+            InitializeSingleton();
+            InitializeInputSystemActions();
+            SubscribeToEvents();
+        }
+
+        private void OnDestroy() {
+            UnsubscribeFromEvents();
+            _inputSystemActions.Dispose();
+        }
+
+
+        private void InitializeSingleton() {
             Logger.LogInitializingInstance(this);
             if (Instance != null) {
                 Logger.LogMultipleInstancesError(this);
@@ -32,21 +43,23 @@ namespace Game.Manager {
             }
             Instance = this;
             Logger.LogInstanceInitialized(this);
+        }
 
+        private void InitializeInputSystemActions() {
             _inputSystemActions = new InputSystem_Actions();
             _inputSystemActions.Enable();
+        }
 
+        private void SubscribeToEvents() {
             _inputSystemActions.Player.Click.performed += ClickPerformed;
             _inputSystemActions.Player.Rotate.performed += RotatePerformed;
             _inputSystemActions.Player.Cancel.performed += CancelPerformed;
         }
 
-        private void OnDestroy() {
+        private void UnsubscribeFromEvents() {
             _inputSystemActions.Player.Click.performed -= ClickPerformed;
             _inputSystemActions.Player.Rotate.performed -= RotatePerformed;
             _inputSystemActions.Player.Cancel.performed -= CancelPerformed;
-
-            _inputSystemActions.Dispose();
         }
 
 
