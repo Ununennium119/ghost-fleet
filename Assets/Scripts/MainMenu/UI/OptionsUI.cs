@@ -1,23 +1,29 @@
 ﻿using Game.Audio;
-using Game.Manager;
 using NaughtyAttributes;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Game.UI {
-    public class PauseMenuUI : MonoBehaviour {
+namespace MainMenu.UI {
+    public class OptionsUI : MonoBehaviour {
+        [Header("Sliders")]
         [SerializeField, Tooltip("The music slider")] [Required]
         private Slider musicSlider;
         [SerializeField, Tooltip("The sound effects slider")] [Required]
         private Slider sfxSlider;
 
+        [Header("Buttons")]
         [SerializeField, Tooltip("The back button")] [Required]
         private Button backButton;
 
 
-        private GameManager _gameManager;
         private MusicManager _musicManager;
         private SoundEffectsManager _soundEffectsManager;
+
+
+        public void Show() {
+            gameObject.SetActive(true);
+        }
 
 
         private void Awake() {
@@ -27,7 +33,6 @@ namespace Game.UI {
 
         private void Start() {
             ResolveSingletons();
-            SubscribeToEvents();
             UpdateSliderValues();
             Hide();
         }
@@ -39,17 +44,15 @@ namespace Game.UI {
         }
 
         private void AddButtonListeners() {
-            backButton.onClick.AddListener(Back);
+            backButton.onClick.AddListener(() => {
+                EventSystem.current.SetSelectedGameObject(null);
+                Hide();
+            });
         }
-
+        
         private void ResolveSingletons() {
-            _gameManager = GameManager.Instance;
             _musicManager = MusicManager.Instance;
             _soundEffectsManager = SoundEffectsManager.Instance;
-        }
-
-        private void SubscribeToEvents() {
-            _gameManager.OnPauseToggled += OnPauseToggledAction;
         }
 
         private void UpdateSliderValues() {
@@ -61,23 +64,12 @@ namespace Game.UI {
             gameObject.SetActive(false);
         }
 
-
-        private void OnPauseToggledAction(object sender, GameManager.OnPauseToggledArgs e) {
-            gameObject.SetActive(e.IsGamePaused);
-        }
-
-
         private void ChangeMusicVolume(float value) {
             _musicManager.SetVolume(value);
         }
 
         private void ChangeSoundEffectsVolume(float value) {
             _soundEffectsManager.SetVolume(value);
-        }
-
-        private void Back() {
-            _gameManager.TogglePause();
-            Hide();
         }
     }
 }

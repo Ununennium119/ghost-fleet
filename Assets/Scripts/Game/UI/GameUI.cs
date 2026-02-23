@@ -11,22 +11,23 @@ using UnityEngine.UI;
 
 namespace Game.UI {
     public class GameUI : MonoBehaviour {
+        [Header("Buttons")]
         [SerializeField, Tooltip("The main menu button")] [Required]
         private Button mainMenuButton;
         [SerializeField, Tooltip("The options button")] [Required]
         private Button optionsButton;
+        [SerializeField, Tooltip("The next phase button")] [Required]
+        private Button nextPhaseButton;
 
+        [Header("Texts")]
         [SerializeField, Tooltip("The player 1 text")] [Required]
         private TextMeshProUGUI player1Text;
         [SerializeField, Tooltip("The player 2 text")] [Required]
         private TextMeshProUGUI player2Text;
         [SerializeField, Tooltip("The text the winner")] [Required]
         private TextMeshProUGUI winText;
-
         [SerializeField, Tooltip("The text showing the current phase")] [Required]
         private TextMeshProUGUI phaseText;
-        [SerializeField, Tooltip("The next phase button")] [Required]
-        private Button nextPhaseButton;
 
 
         private bool _isLocalPlacementReady = false;
@@ -37,29 +38,52 @@ namespace Game.UI {
 
 
         private void Awake() {
+            ResolveSingletonsAwake();
+            AddButtonListeners();
+            HideWinText();
+        }
+
+        private void Start() {
+            ResolveSingletonsStart();
+            SubscribeToEvents();
+
+            if (_gameTypeManager.IsOnline()) {
+                UpdatePlayerNames();
+            }
+        }
+
+
+        private void ResolveSingletonsAwake() {
             _gameTypeManager = GameTypeManager.Instance;
-            
+        }
+
+        private void AddButtonListeners() {
             mainMenuButton.onClick.AddListener(() => SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene));
             optionsButton.onClick.AddListener(TogglePause);
-
-            winText.gameObject.SetActive(false);
 
             nextPhaseButton.onClick.AddListener(NextPhase);
         }
 
-        private void Start() {
+        private void HideWinText() {
+            winText.gameObject.SetActive(false);
+        }
+
+        private void ResolveSingletonsStart() {
             _multiplayerManager = MultiplayerManager.Instance;
             _gameManager = GameManager.Instance;
+        }
 
+        private void SubscribeToEvents() {
             _gameManager.OnPhaseChanged += OnPhaseChangedAction;
             _gameManager.OnWin += OnWinAction;
             _gameManager.OnPlacementReady += OnPlacementReadyAction;
 
             Ship.OnAnyShipPlaced += OnAnyShipPlacedAction;
+        }
 
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
-                UpdatePlayerNames();
-            }
+        private void UpdatePlayerNames() {
+            player1Text.text = _multiplayerManager.GetPlayerData(index: 0).Name.ToString();
+            player2Text.text = _multiplayerManager.GetPlayerData(index: 1).Name.ToString();
         }
 
 
@@ -77,19 +101,8 @@ namespace Game.UI {
             nextPhaseButton.interactable = false;
         }
 
-        private void OnAnyShipPlacedAction(object sender, EventArgs e) {
-            // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-            nextPhaseButton.interactable = _gameManager.GetCurrentGamePhase() switch {
-                GamePhase.Placement1 => _gameManager.GetPlayerBoard(Player.Player1).AreShipsOnBoard(),
-                GamePhase.Placement2 => _gameManager.GetPlayerBoard(Player.Player2).AreShipsOnBoard(),
-                GamePhase.Placement => !_isLocalPlacementReady && _gameManager
-                    .GetPlayerBoard(_multiplayerManager.GetLocalPlayerData().Player).AreShipsOnBoard(),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-
         private void OnWinAction(object sender, GameManager.OnWinArgs e) {
-            if (_gameTypeManager.GetGameType() == GameTypeManager.GameType.Online) {
+            if (_gameTypeManager.IsOnline()) {
                 winText.text = e.Winner switch {
                     Player.Player1 => $"{_multiplayerManager.GetPlayerData(index: 0).Name} Wins!",
                     Player.Player2 => $"{_multiplayerManager.GetPlayerData(index: 1).Name} Wins!",
@@ -113,11 +126,17 @@ namespace Game.UI {
             }
         }
 
-
-        private void UpdatePlayerNames() {
-            player1Text.text = _multiplayerManager.GetPlayerData(index: 0).Name.ToString();
-            player2Text.text = _multiplayerManager.GetPlayerData(index: 1).Name.ToString();
+        private void OnAnyShipPlacedAction(object sender, EventArgs e) {
+            // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+            nextPhaseButton.interactable = _gameManager.GetCurrentGamePhase() switch {
+                GamePhase.Placement1 => _gameManager.GetPlayerBoard(Player.Player1).AreShipsOnBoard(),
+                GamePhase.Placement2 => _gameManager.GetPlayerBoard(Player.Player2).AreShipsOnBoard(),
+                GamePhase.Placement => !_isLocalPlacementReady && _gameManager
+                    .GetPlayerBoard(_multiplayerManager.GetLocalPlayerData().Player).AreShipsOnBoard(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
+
 
 
         private void TogglePause() {

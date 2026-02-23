@@ -1,15 +1,11 @@
 ﻿using System;
 using Common.Utility;
-using Game.Manager;
 using Game.ScriptableObjects;
 using UnityEngine;
 using Logger = Common.Utility.Logger;
 using Random = UnityEngine.Random;
 
 namespace Game.Audio {
-    /// <summary>
-    /// Manages playing the sound effects and modifying their volume.
-    /// </summary>
     /// <remarks>This class is singleton.</remarks>
     public class SoundEffectsManager : MonoBehaviour {
         private const float DEFAULT_SOUND_EFFECTS_VOLUME = 0.5f;
@@ -22,22 +18,15 @@ namespace Game.Audio {
         private AudioClipsSO audioClipsSO;
 
 
-        /// <summary>
-        /// Adjusts the volume of sound effects, configurable by the player in the options menu.
-        /// </summary>
         private float _volumeMultiplier;
 
         private Vector3? _cameraPosition;
 
 
-        /// <returns>Sound effects volume</returns>
         public float GetVolume() {
             return _volumeMultiplier;
         }
 
-        /// <summary>
-        /// Increases volume of sound effects by 0.1. If volume is 1, sets it to 0.
-        /// </summary>
         public void SetVolume(float value) {
             _volumeMultiplier = value;
             PlayerPrefsManager.SetSoundEffectsVolume(_volumeMultiplier);
@@ -45,6 +34,17 @@ namespace Game.Audio {
 
 
         private void Awake() {
+            InitializeSingleton();
+            CacheReferences();
+            UpdateVolumeMultiplier();
+        }
+
+        private void Start() {
+            SubscribeToEvents();
+        }
+
+
+        private void InitializeSingleton() {
             Logger.LogInitializingInstance(this);
             if (Instance != null) {
                 Logger.LogMultipleInstancesError(this);
@@ -53,24 +53,22 @@ namespace Game.Audio {
             }
             Instance = this;
             Logger.LogInstanceInitialized(this);
+        }
 
+        private void CacheReferences() {
             _cameraPosition = Camera.main?.transform.position;
-
-            UpdateVolumeMultiplier();
         }
 
-        private void Start() {
-            Cell.OnAnyAttack += PlayAttackAudioClip;
+        private void SubscribeToEvents() {
+            Cell.OnAnyAttack += CellOnAnyAttackAction;
         }
 
 
-        /// <remarks>
-        /// Invoked when the <see cref="GameManager.OnAttack"/> event is triggered.
-        /// </remarks>
-        private void PlayAttackAudioClip(object sender, EventArgs e) {
+        private void CellOnAnyAttackAction(object sender, EventArgs e) {
             var position = _cameraPosition ?? gameObject.transform.position;
             PlaySound(audioClipsSO.attackAudioClips, position);
         }
+
 
         private void PlaySound(AudioClip[] clip, Vector3 position, float volume = 1.0f) {
             var selectedClip = clip[Random.Range(0, clip.Length)];

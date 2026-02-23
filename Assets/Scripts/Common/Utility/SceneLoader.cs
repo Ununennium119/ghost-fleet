@@ -2,9 +2,6 @@
 using UnityEngine.SceneManagement;
 
 namespace Common.Utility {
-    /// <summary>
-    /// This class is responsible for loading scenes.
-    /// </summary>
     public static class SceneLoader {
         public enum Scene {
             MainMenuScene,
@@ -18,32 +15,22 @@ namespace Common.Utility {
         private static Scene _targetScene;
 
 
-        /// <summary>
-        /// Loads the specified scene.
-        /// </summary>
-        /// <param name="scene">The scene to load.</param>
         public static void LoadScene(Scene scene) {
             _targetScene = scene;
             SceneManager.LoadScene(nameof(Scene.LoadingScene));
         }
 
-        /// <summary>
-        /// Loads a networked scene directly.
-        /// </summary>
-        /// <param name="scene">The scene to load.</param>
-        public static void LoadNetwork(Scene scene) {
+        public static void LoadNetworkScene(Scene scene) {
             NetworkManager.Singleton.SceneManager.LoadScene(scene.ToString(), LoadSceneMode.Single);
         }
 
         /// <summary>
-        /// This method is called after a loading scene to load the actual target scene.
+        /// This method is called after loading scene is load to load the actual target scene.
         /// </summary>
         public static void LoadSceneCallback() {
             SceneManager.LoadScene(_targetScene.ToString());
         }
 
-        /// <param name="scene">The scene to check.</param>
-        /// <returns><c>true</c> if the scene is active, otherwise <c>false</c>.</returns>
         public static bool IsSceneActive(Scene scene) {
             return SceneManager.GetActiveScene().name == scene.ToString();
         }

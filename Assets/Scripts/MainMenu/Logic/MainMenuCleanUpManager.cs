@@ -9,6 +9,11 @@ namespace MainMenu.Logic {
     /// </summary>
     public class MainMenuCleanUpManager : MonoBehaviour {
         private void Awake() {
+            CleanupDontDestroyOnLoad();
+        }
+
+
+        private void CleanupDontDestroyOnLoad() {
             if (GameTypeManager.Instance != null) {
                 Destroy(GameTypeManager.Instance.gameObject);
             }

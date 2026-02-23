@@ -20,15 +20,21 @@ namespace Game {
         private GameManager _gameManager;
 
 
-        private void Awake() {
-            ship.OnHoverChanged += OnHoverChangedAction;
-            ship.OnSelectionChanged += OnSelectionChangedAction;
+        private void Start() {
+            ResolveSingletons();
+            SubscribeToEvents();
         }
 
-        private void Start() {
+
+        private void ResolveSingletons() {
             _gameManager = GameManager.Instance;
             _multiplayerManager = MultiplayerManager.Instance;
+        }
 
+        private void SubscribeToEvents() {
+            ship.OnHoverChanged += OnHoverChangedAction;
+            ship.OnSelectionChanged += OnSelectionChangedAction;
+            
             _gameManager.OnPhaseChanged += OnPhaseChangedAction;
         }
 

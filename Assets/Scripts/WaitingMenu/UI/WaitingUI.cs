@@ -9,25 +9,20 @@ using UnityEngine.UI;
 using WaitingMenu.Logic;
 
 namespace WaitingMenu.UI {
-    /// <summary>
-    /// The UI for the character selection menu.
-    /// </summary>
     public class WaitingUI : NetworkBehaviour {
+        [Header("Buttons")]
         [SerializeField, Tooltip("The main menu button")]
         private Button mainMenuButton;
-
         [SerializeField, Tooltip("The ready button")]
         private Button readyButton;
 
+        [Header("Texts")]
         [SerializeField, Tooltip("The lobby name text")]
         private TextMeshProUGUI lobbyNameText;
-
         [SerializeField, Tooltip("The lobby code text")]
         private TextMeshProUGUI lobbyCodeText;
-
         [SerializeField, Tooltip("The name of the player 1")]
         private TextMeshProUGUI player1NameText;
-
         [SerializeField, Tooltip("The name of the player 2")]
         private TextMeshProUGUI player2NameText;
 
@@ -38,26 +33,46 @@ namespace WaitingMenu.UI {
 
 
         private void Start() {
+            ResolveSingletons();
+            SubscribeToEvents();
+            AddButtonListeners();
+            UpdateLobbyInfo();
+            UpdatePlayerInfo();
+        }
+
+        public override void OnDestroy() {
+            UnsubscribeFromEvents();
+        }
+
+
+        private void ResolveSingletons() {
             _multiplayerManager = MultiplayerManager.Instance;
             _waitingManager = WaitingManager.Instance;
             _lobbyManager = LobbyManager.Instance;
+        }
 
+        private void SubscribeToEvents() {
             _waitingManager.OnReadyChanged += OnReadyChangedAction;
             _multiplayerManager.OnPlayerDataListChanged += OnPlayerDataListChangedAction;
+        }
 
+        private void UnsubscribeFromEvents() {
+            _multiplayerManager.OnPlayerDataListChanged -= OnPlayerDataListChangedAction;
+        }
+
+        private void AddButtonListeners() {
             mainMenuButton.onClick.AddListener(() => {
                 _lobbyManager.LeaveLobby();
                 NetworkManager.Singleton.Shutdown();
                 SceneLoader.LoadScene(SceneLoader.Scene.MainMenuScene);
             });
             readyButton.onClick.AddListener(() => { _waitingManager.SetPlayerReady(); });
-
-            UpdateLobbyInfo();
-            UpdatePlayerInfo();
         }
-
-        public override void OnDestroy() {
-            _multiplayerManager.OnPlayerDataListChanged -= OnPlayerDataListChangedAction;
+        
+        private void UpdateLobbyInfo() {
+            var lobby = _lobbyManager.GetJoinedLobby();
+            lobbyNameText.text = lobby.Name;
+            lobbyCodeText.text = $"Code: {lobby.LobbyCode}";
         }
 
 
@@ -69,14 +84,6 @@ namespace WaitingMenu.UI {
             UpdatePlayerInfo();
         }
 
-        /// <summary>
-        /// Retrieves and updates lobby name and code.
-        /// </summary>
-        private void UpdateLobbyInfo() {
-            var lobby = _lobbyManager.GetJoinedLobby();
-            lobbyNameText.text = lobby.Name;
-            lobbyCodeText.text = $"Code: {lobby.LobbyCode}";
-        }
 
         private void UpdatePlayerInfo() {
             if (_multiplayerManager.HasPlayerData(0)) {

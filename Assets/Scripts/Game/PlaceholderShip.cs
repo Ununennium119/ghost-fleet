@@ -12,7 +12,7 @@ namespace Game {
         public Direction direction;
         public int size;
 
-        public Vector2Int BoardPosition { get; private set; }
+        public Vector2Int Coordinate { get; private set; }
         public bool IsOnBoard { get; private set; }
 
 
@@ -20,17 +20,28 @@ namespace Game {
 
 
         private void Start() {
-            _inputManager = InputManager.Instance;
-
-            _inputManager.OnRotatePerformed += Rotate;
-
-            Cell.OnAnyHover += CellOnAnyHoverAction;
-
+            ResolveSingletons();
+            SubscribeToEvents();
             UpdateRotationBasedOnDirection();
         }
 
         private void OnDestroy() {
-            _inputManager.OnRotatePerformed -= Rotate;
+            UnsubscribeFromEvents();
+        }
+
+
+        private void ResolveSingletons() {
+            _inputManager = InputManager.Instance;
+        }
+
+        private void SubscribeToEvents() {
+            _inputManager.OnRotatePerformed += OnRotatePerformedAction;
+
+            Cell.OnAnyHover += CellOnAnyHoverAction;
+        }
+
+        private void UnsubscribeFromEvents() {
+            _inputManager.OnRotatePerformed -= OnRotatePerformedAction;
 
             Cell.OnAnyHover -= CellOnAnyHoverAction;
         }
@@ -49,11 +60,11 @@ namespace Game {
             };
             transform.position = cell.transform.position + offset;
 
-            BoardPosition = cell.GetPosition();
+            Coordinate = cell.GetCoordinate();
             IsOnBoard = true;
         }
 
-        private void Rotate(object sender, InputManager.OnRotatePerformedArgs e) {
+        private void OnRotatePerformedAction(object sender, InputManager.OnRotatePerformedArgs e) {
             direction = e.Value switch {
                 > 0 => direction switch {
                     Direction.Up => Direction.Left,
